@@ -1,8 +1,18 @@
 package vn.edu.hcmus.fit.pmtoan;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import static vn.edu.hcmus.fit.pmtoan.Utils.*;
 
 /**
  * vn.edu.hcmus.fit.pmtoan
@@ -10,7 +20,7 @@ import java.awt.event.*;
  * Date 12/21/2021 - 10:19 AM
  * Description: ...
  */
-public class UI implements ActionListener {
+public class UI implements ActionListener, ListSelectionListener, KeyListener {
     private JFrame mainFrame;
 
     JPanel searchPanel;
@@ -20,25 +30,34 @@ public class UI implements ActionListener {
     private JButton edit_func;
     private JButton minigame_func;
 
-    private JButton search_btn;
-    private JTextField search_filed;
-    private JList search_result;
+    private JButton slang_search_btn;
+    private JButton definition_search_btn;
+    private JTextField search_input;
+    private DefaultListModel list_slang;
+    private JList slang_result;
+    private DefaultListModel list_history;
     private JList search_history;
+    private JTextArea definition;
 
-    private JTextField slang_word;
-    private JTextField definition;
+    private JTextField slang_word_input;
+    private JTextField definition_input;
     private JButton add_btn;
     private JButton update_btn;
     private JButton delete_btn;
     private JButton reset_btn;
+    private JButton delete_history_btn;
+
+    Map<String, String> dictionary = new HashMap<>();
 
     public UI(){
+        dictionary = readOriginFile("slang.txt");
+        readEditFile("edit.txt", dictionary);
         prepareGUI();
     }
 
     public void prepareGUI(){
         mainFrame = new JFrame("Dictionary");
-        mainFrame.setSize(1100,600);
+        //mainFrame.setSize(1300,700);
         mainFrame.setLayout(new BorderLayout());
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.addWindowListener(new WindowAdapter() {
@@ -54,8 +73,6 @@ public class UI implements ActionListener {
                 }
             }
         });
-
-        mainFrame.setVisible(true);
     }
 
     public void showUI(){
@@ -73,7 +90,11 @@ public class UI implements ActionListener {
 
         mainFrame.add(functionPanel, BorderLayout.WEST);
         mainFrame.add(workPanel, BorderLayout.CENTER);
+
+        mainFrame.pack();
+        mainFrame.setVisible(true);
     }
+
     private JPanel functionPanel(){
         JPanel panel = new JPanel(new GridBagLayout());
 
@@ -112,33 +133,102 @@ public class UI implements ActionListener {
         JLabel panel_label = new JLabel("SEARCH");
         panel_label.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 40));
 
-        search_btn = new JButton("search");
-        search_btn.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
-        search_btn.setFocusable(false);
-        search_btn.addActionListener(this);
+        //-------------------------- SEARCH FIELD -----------------------------\\
+        search_input = new JTextField(30);
+        search_input.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
+        search_input.addKeyListener(this);
 
-        search_filed = new JTextField(30);
-        search_filed.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
+        //-------------------------- SEARCH BUTTON -----------------------------\\
+        JLabel label_search= new JLabel("Search by");
+        label_search.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 20));
 
-        search_result = new JList();
+        slang_search_btn = new JButton("slang");
+        slang_search_btn.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 20));
+        slang_search_btn.setFocusable(false);
+        slang_search_btn.addActionListener(this);
 
-        search_history = new JList();
+        definition_search_btn = new JButton("definition");
+        definition_search_btn.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 20));
+        definition_search_btn.setFocusable(false);
+        definition_search_btn.addActionListener(this);
 
+        JPanel search_panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 25,10));
+        search_panel.add(label_search);
+        search_panel.add(slang_search_btn);
+        search_panel.add(definition_search_btn);
+
+        //-------------------------- SEARCH RESULT -----------------------------\\
+        JLabel label_slang= new JLabel("Slang list");
+        label_slang.setFont(new Font(Font.MONOSPACED, Font.BOLD, 20));
+        label_slang.setForeground(new Color(15, 175, 15));
+
+        list_slang = new DefaultListModel();
+        slang_result = new JList(list_slang);
+        slang_result.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
+        slang_result.addListSelectionListener(this);
+        JScrollPane scrollPane = new JScrollPane(slang_result);
+        scrollPane.setPreferredSize(new Dimension(450,250));
+
+        JPanel slang_panel = new JPanel(new BorderLayout(10,10));
+        slang_panel.add(label_slang, BorderLayout.NORTH);
+        slang_panel.add(scrollPane, BorderLayout.CENTER);
+
+        JLabel label_definition = new JLabel("Definition");
+        label_definition.setFont(new Font(Font.MONOSPACED, Font.BOLD, 20));
+        label_definition.setForeground(new Color(211, 15, 15));
+
+        definition = new JTextArea();
+        definition.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
+        definition.setPreferredSize(new Dimension(450,200));
+
+        JPanel definition_panel = new JPanel(new BorderLayout(10,10));
+        definition_panel.add(label_definition, BorderLayout.NORTH);
+        definition_panel.add(definition, BorderLayout.CENTER);
+
+        //-------------------------- HISTORY SEARCH -----------------------------\\
+        JLabel history_label = new JLabel("History Search");
+        history_label.setFont(new Font(Font.MONOSPACED, Font.BOLD, 25));
+        history_label.setForeground(Color.PINK);
+
+        list_history = new DefaultListModel();
+        search_history = new JList(list_history);
+        search_history.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
+
+        JScrollPane scrollPane2 = new JScrollPane(search_history);
+        scrollPane2.setPreferredSize(new Dimension(150,500));
+
+        delete_history_btn = new JButton("delete history");
+        delete_history_btn.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 20));
+        delete_history_btn.setFocusable(false);
+        delete_history_btn.addActionListener(this);
+        delete_history_btn.setBounds(new Rectangle(10,10));
+
+        JPanel history_panel = new JPanel(new BorderLayout(10,10));
+        history_panel.add(history_label, BorderLayout.NORTH);
+        history_panel.add(scrollPane2, BorderLayout.CENTER);
+        history_panel.add(delete_history_btn, BorderLayout.SOUTH);
+
+        //-------------------------- LAYOUT SETUP -----------------------------\\
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.VERTICAL;
-        gbc.insets = new Insets(15,15,15,15);
+        //gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.insets = new Insets(10,15,10,15);
         gbc.gridx = 0;
         gbc.gridy = 0;
         panel.add(panel_label, gbc);
         gbc.gridy = 1;
-        panel.add(search_filed, gbc);
-        gbc.gridx = 1;
-        panel.add(search_btn, gbc);
-        gbc.gridx = 0;
+        panel.add(search_input, gbc);
         gbc.gridy = 2;
-        panel.add(search_result, gbc);
+        panel.add(search_panel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        panel.add(slang_panel, gbc);
+        gbc.gridy = 4;
+        panel.add(definition_panel, gbc);
+
         gbc.gridx = 1;
-        panel.add(search_history, gbc);
+        gbc.gridy = 1;
+        gbc.gridheight = 4;
+        panel.add(history_panel, gbc);
 
         return panel;
     }
@@ -150,21 +240,21 @@ public class UI implements ActionListener {
 
         JLabel panel_label = new JLabel("EDIT");
         panel_label.setFont(new Font(font, Font.PLAIN, 40));
-        
+
         //-------------- slang_word --------------------------------------
         JLabel slang_label = new JLabel("Slang word");
         slang_label.setFont(new Font(font, Font.PLAIN, size_text));
-        slang_word = new JTextField(col);
-        slang_word.setFont(new Font(font, Font.PLAIN, size_text));
+        slang_word_input = new JTextField(col);
+        slang_word_input.setFont(new Font(font, Font.PLAIN, size_text));
         //-------------- slang_word --------------------------------------
 
         //-------------- definition --------------------------------------
         JLabel definition_label = new JLabel("Definition");
         definition_label.setFont(new Font(font, Font.PLAIN, size_text));
-        definition = new JTextField(col);
-        definition.setFont(new Font(font, Font.PLAIN, size_text));
+        definition_input = new JTextField(col);
+        definition_input.setFont(new Font(font, Font.PLAIN, size_text));
         //-------------- definition font
-        
+
         JPanel input = new JPanel();
         input.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -179,10 +269,10 @@ public class UI implements ActionListener {
 
         gbc.gridx = 1;
         gbc.gridy = 0;
-        input.add(slang_word, gbc);
+        input.add(slang_word_input, gbc);
         gbc.gridy = 1;
-        input.add(definition, gbc);
-   
+        input.add(definition_input, gbc);
+
 
         add_btn = new JButton("ADD");
         add_btn.setFont(new Font("", Font.BOLD, size_text));
@@ -253,5 +343,60 @@ public class UI implements ActionListener {
         }
         else if (minigame_func.equals(source)) {
         }
+        else if(source.equals(slang_search_btn)){
+            HashSet<String> keySet = new HashSet<>(dictionary.keySet());
+            List<String> listResult = searchBySlang(search_input.getText(), keySet);
+            definition.setText("");
+            list_slang.clear();
+            list_slang.addAll(listResult);
+        }
+        else if(source.equals(definition_search_btn)){
+            List<String> listResult = searchByDefinition(search_input.getText(), dictionary);
+            definition.setText("");
+            list_slang.clear();
+            list_slang.addAll(listResult);
+        }
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        if(!slang_result.isSelectionEmpty() && !e.getValueIsAdjusting()){
+            int idx = slang_result.getSelectedIndex();
+
+            String key = list_slang.getElementAt(idx).toString();
+            String definition = dictionary.get(key);
+
+            this.definition.setText(definition);
+            DefaultHighlighter hilit = new DefaultHighlighter();
+            DefaultHighlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.red);
+            
+
+            list_history.addElement(key);
+        }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        StringBuilder text = new StringBuilder(search_input.getText().trim());
+        text.append(e.getKeyChar());
+        if(e.getKeyChar() == (char)8){
+            System.out.println(text.length());
+            text.deleteCharAt(text.length() - 1);
+        }
+
+        HashSet<String> keySet = new HashSet<>(dictionary.keySet());
+        List<String> listResult = searchBySlang(text.toString(), keySet);
+        list_slang.clear();
+        list_slang.addAll(listResult);
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 }

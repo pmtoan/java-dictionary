@@ -10,31 +10,93 @@ import java.util.*;
  * Description: ...
  */
 public class Utils {
-    public static void readFile(){
-        File file = new File("slang.txt");
-
+    public static Map<String, String> readOriginFile(String pathFile){
+        Map<String, String> map = new HashMap<>();
         try {
-            Map<String, String> map = new HashMap<>();
-            List<String> lines = new ArrayList<>();
-
+            File file = new File(pathFile);
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
             String line;
 
             while((line = bufferedReader.readLine()) != null)
             {
-                lines.add(line);
-                //String[] elements = line.split("`");
-                //System.out.println(line);
-                //map.put(elements[0],  elements[1]);
+                String[] split = line.split("`");
+                if(split.length != 2)
+                    continue;
+                map.put(split[0], split[1]);
             }
-            System.out.println(lines.size());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return map;
+    }
+
+    public static void readEditFile(String pathFile, Map<String, String> dictionary){
+        try {
+            File file = new File(pathFile);
+            if(!file.isFile()){
+                file.createNewFile();
+            } else{
+                BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+
+                String line;
+
+                while((line = bufferedReader.readLine()) != null)
+                {
+                    String[] split = line.split("`");
+                    if(split.length != 2)
+                        continue;
+                    dictionary.put(split[0], split[1]);
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public static List<String> searchBySlang(String pattern, HashSet<String> keySet){
+        List<String> list = new ArrayList<>();
+
+        for(String key : keySet){
+            if(key.contains(pattern)){
+                list.add(key);
+            }
+        }
+
+        return list;
+    }
+
+    public static List<String> searchByDefinition(String pattern, Map<String, String> dictionary){
+        List<String> list = new ArrayList<>();
+
+        for(String key : dictionary.keySet()){
+            if(dictionary.get(key).toLowerCase(Locale.ROOT).contains(pattern.toLowerCase(Locale.ROOT))){
+                list.add(key);
+            }
+        }
+
+        return list;
+    }
+
+
     public static void main(String[] args){
-        readFile();
+        Scanner s = new Scanner(System.in);
+        String st = s.nextLine();
+        if(st.equals("ok")){
+            long startTime = System.currentTimeMillis();
+            Map<String, String> map = readOriginFile("s.txt");
+            long middle = System.currentTimeMillis();
+
+            HashSet<String> keySet = new HashSet<>(map.keySet());
+            List<String> listResult = searchBySlang("mai", keySet);
+
+            System.out.println("Read file: " + (middle - startTime));
+            System.out.println("Search: " + (System.currentTimeMillis() - middle));
+            System.out.println("Result size: " + listResult.size());
+        }
+
+
     }
 }
