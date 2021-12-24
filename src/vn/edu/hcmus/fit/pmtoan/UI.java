@@ -41,7 +41,7 @@ public class UI implements ActionListener {
     private JTextArea definition;
 
     private JTextField slang_word_input;
-    private JTextField definition_input;
+    private JTextArea definition_input;
     private JButton add_btn;
     private JButton update_btn;
     private JButton delete_btn;
@@ -49,6 +49,9 @@ public class UI implements ActionListener {
     private JButton delete_history_btn;
 
     Map<String, String> dictionary = new HashMap<>();
+
+    private DefaultListModel list_slang_edit;
+    private JList list_edit;
 
     String historyFile = "history.txt";
     String slangOriginFile = "slang.txt";
@@ -199,6 +202,7 @@ public class UI implements ActionListener {
         label_slang.setForeground(new Color(15, 175, 15));
 
         list_slang = new DefaultListModel();
+        list_slang.addAll(dictionary.keySet());
         slang_result = new JList(list_slang);
         slang_result.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
         slang_result.addListSelectionListener(new ListSelectionListener() {
@@ -233,6 +237,7 @@ public class UI implements ActionListener {
         definition.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
         definition.setLineWrap(true);
         definition.setWrapStyleWord(true);
+        definition.setEditable(false);
 
         JScrollPane scrollPane2 = new JScrollPane(definition);
         scrollPane2.setPreferredSize(new Dimension(450,200));
@@ -297,20 +302,24 @@ public class UI implements ActionListener {
         JLabel panel_label = new JLabel("EDIT");
         panel_label.setFont(new Font(font, Font.PLAIN, 40));
 
-        //-------------- slang_word --------------------------------------
+        //---------------------- slang_word -----------------------------\\
         JLabel slang_label = new JLabel("Slang word");
         slang_label.setFont(new Font(font, Font.PLAIN, size_text));
         slang_word_input = new JTextField(col);
         slang_word_input.setFont(new Font(font, Font.PLAIN, size_text));
-        //-------------- slang_word --------------------------------------
 
-        //-------------- definition --------------------------------------
+        //------------------------- definition -------------------------\\
         JLabel definition_label = new JLabel("Definition");
         definition_label.setFont(new Font(font, Font.PLAIN, size_text));
-        definition_input = new JTextField(col);
+        definition_input = new JTextArea();
         definition_input.setFont(new Font(font, Font.PLAIN, size_text));
-        //-------------- definition font
+        definition_input.setLineWrap(true);
+        //definition_input.setWrapStyleWord(true);
+        definition_input.setPreferredSize(new Dimension(0, 150));
+        JScrollPane scroll_definition = new JScrollPane(definition_input);
+        scroll_definition.setPreferredSize(new Dimension(0, 150));
 
+        //------------------------- Input setup -------------------------\\
         JPanel input = new JPanel();
         input.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -327,37 +336,38 @@ public class UI implements ActionListener {
         gbc.gridy = 0;
         input.add(slang_word_input, gbc);
         gbc.gridy = 1;
-        input.add(definition_input, gbc);
+        input.add(scroll_definition, gbc);
 
-
+        //------------------------- Button -------------------------\\
         add_btn = new JButton("ADD");
-        add_btn.setFont(new Font("", Font.BOLD, size_text));
+        add_btn.setFont(new Font(font, Font.BOLD, size_text));
         add_btn.setBackground(Color.green);
         add_btn.setPreferredSize(new Dimension(150,35));
         add_btn.setFocusable(false);
         add_btn.addActionListener(this);
 
         update_btn = new JButton("UPDATE");
-        update_btn.setFont(new Font("", Font.BOLD, size_text));
+        update_btn.setFont(new Font(font, Font.BOLD, size_text));
         update_btn.setBackground(Color.yellow);
         update_btn.setPreferredSize(new Dimension(150,35));
         update_btn.setFocusable(false);
         update_btn.addActionListener(this);
 
         delete_btn = new JButton("DELETE");
-        delete_btn.setFont(new Font("", Font.BOLD, size_text));
+        delete_btn.setFont(new Font(font, Font.BOLD, size_text));
         delete_btn.setBackground(Color.red);
         delete_btn.setPreferredSize(new Dimension(150,35));
         delete_btn.setFocusable(false);
         delete_btn.addActionListener(this);
 
         reset_btn = new JButton("RESET");
-        reset_btn.setFont(new Font("", Font.BOLD, size_text));
+        reset_btn.setFont(new Font(font, Font.BOLD, size_text));
         reset_btn.setBackground(Color.ORANGE);
         reset_btn.setPreferredSize(new Dimension(150,35));
         reset_btn.setFocusable(false);
         reset_btn.addActionListener(this);
 
+        //------------------------- Button setup -------------------------\\
         JPanel btn = new JPanel();
         btn.setLayout(new FlowLayout());
         btn.add(add_btn);
@@ -365,6 +375,75 @@ public class UI implements ActionListener {
         btn.add(delete_btn);
         btn.add(reset_btn);
 
+        //------------------------- List slang -------------------------\\
+        JLabel search_slang = new JLabel("Search slang");
+        search_slang.setFont(new Font(font, Font.PLAIN, size_text));
+        JTextField search_input_edit = new JTextField(15);
+        search_input_edit.setFont(new Font(font, Font.PLAIN, size_text));
+        search_input_edit.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                StringBuilder text = new StringBuilder(search_input_edit.getText().trim());
+                text.append(e.getKeyChar());
+                if(e.getKeyChar() == (char)8){
+                    System.out.println(text.length());
+                    text.deleteCharAt(text.length() - 1);
+                }
+
+                HashSet<String> keySet = new HashSet<>(dictionary.keySet());
+                List<String> listResult = searchBySlang(text.toString(), keySet);
+                list_slang_edit.clear();
+                list_slang_edit.addAll(listResult);
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        });
+
+        list_slang_edit = new DefaultListModel();
+        list_slang_edit.addAll(dictionary.keySet());
+
+        list_edit = new JList(list_slang_edit);
+        list_edit.setFont(new Font(font, Font.PLAIN, size_text));
+        list_edit.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if(!list_edit.isSelectionEmpty() && !e.getValueIsAdjusting()) {
+                    int select = list_edit.getSelectedIndex();
+                    String key = list_slang_edit.getElementAt(select).toString();
+                    String value = dictionary.get(key);
+
+                    slang_word_input.setText(key);
+                    definition_input.setText(value);
+                }
+            }
+        });
+
+        JScrollPane scroll_list = new JScrollPane(list_edit);
+        scroll_list.setPreferredSize(new Dimension(250,300));
+
+        JPanel search_panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc_search = new GridBagConstraints();
+        gbc_search.insets = new Insets(0,10,5,10);
+        gbc_search.gridx=0;
+        gbc_search.gridy=0;
+        search_panel.add(search_slang, gbc_search);
+        gbc_search.gridx=0;
+        gbc_search.gridy=1;
+        search_panel.add(search_input_edit, gbc_search);
+        gbc_search.gridx=1;
+        gbc_search.gridy=1;
+        gbc_search.gridheight = 2;
+        search_panel.add(scroll_list, gbc_search);
+
+        //------------------------- Edit panel setup -------------------------\\
         JPanel result = new JPanel();
         result.setLayout(new GridBagLayout());
         gbc.insets = new Insets(5,5,35,0);
@@ -376,6 +455,8 @@ public class UI implements ActionListener {
         result.add(input, gbc);
         gbc.gridy = 2;
         result.add(btn, gbc);
+        gbc.gridy = 3;
+        result.add(search_panel, gbc);
 
         return result;
     }
@@ -415,6 +496,30 @@ public class UI implements ActionListener {
         else if(source.equals(delete_history_btn)){
             list_history.clear();
             saveHistorySearch(historyFile, "", false);
+        }
+        else if(source.equals(add_btn)){
+
+
+            slang_word_input.setText("");
+            definition_input.setText("");
+        }
+        else if(source.equals(update_btn)){
+
+
+            slang_word_input.setText("");
+            definition_input.setText("");
+        }
+        else if(source.equals(delete_btn)){
+
+
+            slang_word_input.setText("");
+            definition_input.setText("");
+        }
+        else if(source.equals(reset_btn)){
+
+
+            slang_word_input.setText("");
+            definition_input.setText("");
         }
     }
 }
