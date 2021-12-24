@@ -7,6 +7,7 @@ import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,7 +21,7 @@ import static vn.edu.hcmus.fit.pmtoan.Utils.*;
  * Date 12/21/2021 - 10:19 AM
  * Description: ...
  */
-public class UI implements ActionListener, ListSelectionListener, KeyListener {
+public class UI implements ActionListener {
     private JFrame mainFrame;
 
     JPanel searchPanel;
@@ -49,9 +50,19 @@ public class UI implements ActionListener, ListSelectionListener, KeyListener {
 
     Map<String, String> dictionary = new HashMap<>();
 
+    String historyFile = "history.txt";
+    String slangOriginFile = "slang.txt";
+    String slangEditFile = "edit.txt";
+
     public UI(){
-        dictionary = readOriginFile("slang.txt");
-        readEditFile("edit.txt", dictionary);
+        dictionary = readOriginFile(slangOriginFile);
+        readEditFile(slangEditFile, dictionary);
+        List<String> history = readHistoryFile(historyFile);
+        list_history = new DefaultListModel();
+        for(String str : history){
+            list_history.addElement(str);
+        }
+
         prepareGUI();
     }
 
@@ -136,7 +147,32 @@ public class UI implements ActionListener, ListSelectionListener, KeyListener {
         //-------------------------- SEARCH FIELD -----------------------------\\
         search_input = new JTextField(30);
         search_input.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
-        search_input.addKeyListener(this);
+        search_input.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                StringBuilder text = new StringBuilder(search_input.getText().trim());
+                text.append(e.getKeyChar());
+                if(e.getKeyChar() == (char)8){
+                    System.out.println(text.length());
+                    text.deleteCharAt(text.length() - 1);
+                }
+
+                HashSet<String> keySet = new HashSet<>(dictionary.keySet());
+                List<String> listResult = searchBySlang(text.toString(), keySet);
+                list_slang.clear();
+                list_slang.addAll(listResult);
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        });
 
         //-------------------------- SEARCH BUTTON -----------------------------\\
         JLabel label_search= new JLabel("Search by");
@@ -165,7 +201,23 @@ public class UI implements ActionListener, ListSelectionListener, KeyListener {
         list_slang = new DefaultListModel();
         slang_result = new JList(list_slang);
         slang_result.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
-        slang_result.addListSelectionListener(this);
+        slang_result.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if(!slang_result.isSelectionEmpty() && !e.getValueIsAdjusting()){
+                    int idx = slang_result.getSelectedIndex();
+
+                    String key = list_slang.getElementAt(idx).toString();
+                    String def = dictionary.get(key);
+
+                    definition.setText(def);
+
+                    list_history.addElement(key);
+
+                    saveHistorySearch(historyFile, key, true);
+                }
+            }
+        });
         JScrollPane scrollPane = new JScrollPane(slang_result);
         scrollPane.setPreferredSize(new Dimension(450,250));
 
@@ -179,33 +231,37 @@ public class UI implements ActionListener, ListSelectionListener, KeyListener {
 
         definition = new JTextArea();
         definition.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
-        definition.setPreferredSize(new Dimension(450,200));
+        definition.setLineWrap(true);
+        definition.setWrapStyleWord(true);
+
+        JScrollPane scrollPane2 = new JScrollPane(definition);
+        scrollPane2.setPreferredSize(new Dimension(450,200));
 
         JPanel definition_panel = new JPanel(new BorderLayout(10,10));
         definition_panel.add(label_definition, BorderLayout.NORTH);
-        definition_panel.add(definition, BorderLayout.CENTER);
+        definition_panel.add(scrollPane2, BorderLayout.CENTER);
 
         //-------------------------- HISTORY SEARCH -----------------------------\\
         JLabel history_label = new JLabel("History Search");
         history_label.setFont(new Font(Font.MONOSPACED, Font.BOLD, 25));
         history_label.setForeground(Color.PINK);
 
-        list_history = new DefaultListModel();
         search_history = new JList(list_history);
         search_history.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
 
-        JScrollPane scrollPane2 = new JScrollPane(search_history);
-        scrollPane2.setPreferredSize(new Dimension(150,500));
+        JScrollPane scrollPane3 = new JScrollPane(search_history);
+        scrollPane3.setPreferredSize(new Dimension(150,580));
 
         delete_history_btn = new JButton("delete history");
         delete_history_btn.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 20));
         delete_history_btn.setFocusable(false);
         delete_history_btn.addActionListener(this);
+        delete_history_btn.setForeground(new Color(211, 15, 15));
         delete_history_btn.setBounds(new Rectangle(10,10));
 
         JPanel history_panel = new JPanel(new BorderLayout(10,10));
         history_panel.add(history_label, BorderLayout.NORTH);
-        history_panel.add(scrollPane2, BorderLayout.CENTER);
+        history_panel.add(scrollPane3, BorderLayout.CENTER);
         history_panel.add(delete_history_btn, BorderLayout.SOUTH);
 
         //-------------------------- LAYOUT SETUP -----------------------------\\
@@ -356,47 +412,9 @@ public class UI implements ActionListener, ListSelectionListener, KeyListener {
             list_slang.clear();
             list_slang.addAll(listResult);
         }
-    }
-
-    @Override
-    public void valueChanged(ListSelectionEvent e) {
-        if(!slang_result.isSelectionEmpty() && !e.getValueIsAdjusting()){
-            int idx = slang_result.getSelectedIndex();
-
-            String key = list_slang.getElementAt(idx).toString();
-            String definition = dictionary.get(key);
-
-            this.definition.setText(definition);
-            DefaultHighlighter hilit = new DefaultHighlighter();
-            DefaultHighlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.red);
-            
-
-            list_history.addElement(key);
+        else if(source.equals(delete_history_btn)){
+            list_history.clear();
+            saveHistorySearch(historyFile, "", false);
         }
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-        StringBuilder text = new StringBuilder(search_input.getText().trim());
-        text.append(e.getKeyChar());
-        if(e.getKeyChar() == (char)8){
-            System.out.println(text.length());
-            text.deleteCharAt(text.length() - 1);
-        }
-
-        HashSet<String> keySet = new HashSet<>(dictionary.keySet());
-        List<String> listResult = searchBySlang(text.toString(), keySet);
-        list_slang.clear();
-        list_slang.addAll(listResult);
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-
     }
 }

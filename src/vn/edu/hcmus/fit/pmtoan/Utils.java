@@ -1,6 +1,8 @@
 package vn.edu.hcmus.fit.pmtoan;
 
+import javax.swing.*;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -60,7 +62,7 @@ public class Utils {
         List<String> list = new ArrayList<>();
 
         for(String key : keySet){
-            if(key.contains(pattern)){
+            if(key.toLowerCase(Locale.ROOT).contains(pattern.toLowerCase(Locale.ROOT))){
                 list.add(key);
             }
         }
@@ -80,23 +82,73 @@ public class Utils {
         return list;
     }
 
+    public static void saveEditFile(String pathFile, Map<String, String> dictionary){
+        try {
+            File file = new File(pathFile);
+            if(!file.isFile()){
+                file.createNewFile();
+            } else{
+                BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+
+                String line;
+
+                while((line = bufferedReader.readLine()) != null)
+                {
+                    String[] split = line.split("`");
+                    if(split.length != 2)
+                        continue;
+                    dictionary.put(split[0], split[1]);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static List<String> readHistoryFile(String pathFile){
+        List<String> list = new ArrayList<>();
+        try {
+            File file = new File(pathFile);
+            if(!file.isFile()){
+                file.createNewFile();
+            } else{
+                BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+                String line = bufferedReader.readLine();
+                if(line != null){
+                    String[] split = line.split("`");
+
+                    for(String key : split)
+                    {
+                        list.add(key);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public static void saveHistorySearch(String pathFile, String key, boolean append){
+        try {
+            File file = new File(pathFile);
+            if (!file.isFile()) {
+                file.createNewFile();
+            }
+            BufferedWriter bufferedWriter = new BufferedWriter(
+                    new FileWriter(file, Charset.defaultCharset(), append));
+
+            String data = key.equals("") ? key : (key + "`");
+
+            bufferedWriter.write(data);
+            bufferedWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public static void main(String[] args){
-        Scanner s = new Scanner(System.in);
-        String st = s.nextLine();
-        if(st.equals("ok")){
-            long startTime = System.currentTimeMillis();
-            Map<String, String> map = readOriginFile("s.txt");
-            long middle = System.currentTimeMillis();
-
-            HashSet<String> keySet = new HashSet<>(map.keySet());
-            List<String> listResult = searchBySlang("mai", keySet);
-
-            System.out.println("Read file: " + (middle - startTime));
-            System.out.println("Search: " + (System.currentTimeMillis() - middle));
-            System.out.println("Result size: " + listResult.size());
-        }
-
-
+        
     }
 }
