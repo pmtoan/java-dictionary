@@ -1,5 +1,6 @@
 Slag`Meaning
 #1`Number one
+#1`Number one duplicate
 $`Dollar| money
 $_$`Has money
 %)`Drunk| giddy
