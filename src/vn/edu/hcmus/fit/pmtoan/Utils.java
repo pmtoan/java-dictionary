@@ -104,6 +104,34 @@ public class Utils {
         return dictionary;
     }
 
+    public static List<Dictionary> readCloneFileToTable(String pathOrigin, String pathClone){
+        List<Dictionary> dictionary = new ArrayList<>();
+        try {
+            File cloneFile = new File(pathClone);
+            if(!cloneFile.isFile()){
+                cloneOriginFile(pathOrigin, pathClone);
+            }
+
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathClone));
+
+            String line;
+            while((line = bufferedReader.readLine()) != null)
+            {
+                String[] split = line.split("`");
+                if(split.length != 2)
+                    continue;
+
+                dictionary.add(new Dictionary(split[0], split[1]));
+            }
+
+            bufferedReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return dictionary;
+    }
+
     public static List<String> searchBySlang(String pattern, HashSet<String> keySet){
         List<String> list = new ArrayList<>();
 
@@ -174,12 +202,12 @@ public class Utils {
         }
     }
 
-    public static void addNewSlang(String pathFile,String[] data){
+    public static void addNewSlang(String pathFile, String slang, String definition){
         try {
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
                     new FileOutputStream(pathFile, true));
 
-            bufferedOutputStream.write((data[0] + "`" + data[1] + "\n").getBytes(StandardCharsets.UTF_8));
+            bufferedOutputStream.write((slang + "`" + definition + "\n").getBytes(StandardCharsets.UTF_8));
             bufferedOutputStream.flush();
             bufferedOutputStream.close();
         } catch (IOException e) {
@@ -187,7 +215,7 @@ public class Utils {
         }
     }
 
-    public static void overwriteAllSlang(String pathFile, String[] oldSlang, String[] newSlang){
+    public static void overwriteAllSlang(String pathFile, String oldSlang, String newDefinition){
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
 
@@ -197,14 +225,14 @@ public class Utils {
 
             while((line = bufferedReader.readLine()) != null)
             {
-                if(line.equals(oldSlang[0])){
+                String[] split = line.split("`");
+                if(split[0].equals(oldSlang)){
                     if(!found){
-                        line = newSlang[0] + "`" + newSlang[1];
+                        line = oldSlang + "`" + newDefinition;
                         found = true;
                     } else{
                         continue;
                     }
-
                 }
                 data_string += line + "\n";
             }
@@ -220,7 +248,7 @@ public class Utils {
         }
     }
 
-    public static void updateSlang(String pathFile, String[] oldSlang, String[] newSlang){
+    public static void updateSlang(String pathFile,  String oldSlang, String oldDefinition, String newDefinition){
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
 
@@ -229,8 +257,8 @@ public class Utils {
 
             while((line = bufferedReader.readLine()) != null)
             {
-                if(line.equals(oldSlang[0]) && line.equals(oldSlang[1])){
-                    line = newSlang[0] + "`" + newSlang[1];
+                if(line.equals(oldSlang) && line.equals(oldDefinition)){
+                    line = oldSlang + "`" + newDefinition;
                 }
                 data_string += line + "\n";
             }
@@ -246,7 +274,7 @@ public class Utils {
         }
     }
 
-    public static void deleteSlang(String pathFile, String[] data){
+    public static void deleteSlang(String pathFile, String slang, String definition){
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
 
@@ -256,7 +284,7 @@ public class Utils {
             while((line = bufferedReader.readLine()) != null)
             {
                 String[] split = line.split("`");
-                if(split[0].equals(data[0]) && split[1].equals(data[1])){
+                if(split[0].equals(slang) && split[1].equals(definition)){
                     continue;
                 }
                 data_string += line + "\n";
@@ -305,17 +333,13 @@ public class Utils {
         Map<String, List<String>>  dictionary = readCloneFile("slang.txt", "slang_clone.txt");
         long middle = System.currentTimeMillis();
 
-        String[] data = {"AAB","Average At Best"};
-        String[] data2 = {"AAB","Average At Best 2"};
-        String[] new_data = {"AAB","Average At Best"};
+        List<Dictionary> d = readCloneFileToTable("slang.txt", "slang_clone.txt");
+        for(Dictionary da : d){
+            System.out.println(da.getSlang() + "  " + da.getDefinition());
+        }
 
-        //cloneOriginFile("slang.txt", "slang_clone.txt");
-        addNewSlang("slang_clone.txt", data);
-        addNewSlang("slang_clone.txt", data2);
-        //overwriteAllSlang("slang_clone.txt", data, new_data);
-        deleteAllSlangFound("slang_clone.txt", "AAC");
-
-        System.out.println("read clone file: " + (middle - start));
+        overwriteAllSlang("slang_clone.txt", "toan", "definition");
+        System.out.println("Read clone file: " + (middle - start));
         System.out.println("Duration: " + (System.currentTimeMillis() - middle));
     }
 }
