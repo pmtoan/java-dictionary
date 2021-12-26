@@ -37,6 +37,7 @@ public class Utils {
                 dictionary.put(split[0], values);
             }
 
+            bufferedReader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -57,6 +58,9 @@ public class Utils {
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathClone));
             bufferedOutputStream.write(bytes_array);
             bufferedOutputStream.flush();
+
+            bufferedInputStream.close();
+            bufferedOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -92,6 +96,7 @@ public class Utils {
                 dictionary.put(split[0], values);
             }
 
+            bufferedReader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -142,6 +147,7 @@ public class Utils {
                         list.add(key);
                     }
                 }
+                bufferedReader.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -162,6 +168,7 @@ public class Utils {
 
             bufferedOutputStream.write(data.getBytes(StandardCharsets.UTF_8));
             bufferedOutputStream.flush();
+            bufferedOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -174,24 +181,49 @@ public class Utils {
 
             bufferedOutputStream.write((data[0] + "`" + data[1] + "\n").getBytes(StandardCharsets.UTF_8));
             bufferedOutputStream.flush();
+            bufferedOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void overwriteSlang(String pathFile,String[] data, Map<String, List<String>> dictionary){
+    public static void overwriteSlang(String pathFile, String[] oldSlang, String[] newSlang){
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
+
+            String line;
+            String data_string = "";
+
+            while((line = bufferedReader.readLine()) != null)
+            {
+                if(line.contains(oldSlang[0]) && line.contains(oldSlang[1])){
+                    line = newSlang[0] + "`" + newSlang[1];
+                }
+                data_string += line + "\n";
+            }
+
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathFile));
+            bufferedOutputStream.write(data_string.getBytes(StandardCharsets.UTF_8));
+            bufferedOutputStream.flush();
+
+            bufferedReader.close();
+            bufferedOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static void main(String[] args){
+        long start = System.currentTimeMillis();
         Map<String, List<String>>  dictionary = readCloneFile("slang.txt", "slang_clone.txt");
 
-        String[] data = {"C++", "Hello world!"};
+        String[] data = {"#1","Number one duplicate"};
+        String[] new_data = {"#1","Number one duplicate x99"};
 
-        addNewSlang("slang_clone.txt", data);
+        //cloneOriginFile("slang.txt", "slang_clone.txt");
+        //addNewSlang("slang_clone.txt", data);
+        overwriteSlang("slang_clone.txt", data, new_data);
+
+        System.out.println("Duration: " + (System.currentTimeMillis() - start));
     }
 }

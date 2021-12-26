@@ -1,5 +1,6 @@
 Slag`Meaning
 #1`Number one
+#1`Number one duplicate x99
 $`Dollar| money
 $_$`Has money
 %)`Drunk| giddy
@@ -7660,3 +7661,5 @@ ZZZ`Sleepy| bored| tired
 ~`Denotes Sarcasm| Put At The End Of A Word To Make It Longer
 Æ`Registered Trademark Symbol
 ô`Trademark
+#1`Number one duplicate x99
+
