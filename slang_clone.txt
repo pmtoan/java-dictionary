@@ -255,8 +255,6 @@ A7A`Frusration, anger
 A7X`Avenged Sevenfold (band)
 AA`Alcoholics Anonymous| African-American| Automobile Association
 AAA`American Automobile Association| Battery size
-AAB`Number one duplicate x999
-AAC`Apple Audio Compression
 AAF`Always and Forever
 AAK`Alive And Kicking
 AAMOF`As A Matter Of Fact
@@ -7659,3 +7657,4 @@ ZZZ`Sleepy| bored| tired
 Æ`Registered Trademark Symbol
 ô`Trademark
 AAB`Average At Best
+AAB`Average At Best 2

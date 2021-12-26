@@ -197,7 +197,7 @@ public class Utils {
 
             while((line = bufferedReader.readLine()) != null)
             {
-                if(line.contains(oldSlang[0])){
+                if(line.equals(oldSlang[0])){
                     if(!found){
                         line = newSlang[0] + "`" + newSlang[1];
                         found = true;
@@ -229,8 +229,62 @@ public class Utils {
 
             while((line = bufferedReader.readLine()) != null)
             {
-                if(line.contains(oldSlang[0]) && line.contains(oldSlang[1])){
+                if(line.equals(oldSlang[0]) && line.equals(oldSlang[1])){
                     line = newSlang[0] + "`" + newSlang[1];
+                }
+                data_string += line + "\n";
+            }
+
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathFile));
+            bufferedOutputStream.write(data_string.getBytes(StandardCharsets.UTF_8));
+            bufferedOutputStream.flush();
+
+            bufferedReader.close();
+            bufferedOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteSlang(String pathFile, String[] data){
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
+
+            String line;
+            String data_string = "";
+
+            while((line = bufferedReader.readLine()) != null)
+            {
+                String[] split = line.split("`");
+                if(split[0].equals(data[0]) && split[1].equals(data[1])){
+                    continue;
+                }
+                data_string += line + "\n";
+            }
+
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathFile));
+            bufferedOutputStream.write(data_string.getBytes(StandardCharsets.UTF_8));
+            bufferedOutputStream.flush();
+
+            bufferedReader.close();
+            bufferedOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteAllSlangFound(String pathFile, String slang_word){
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
+
+            String line;
+            String data_string = "";
+
+            while((line = bufferedReader.readLine()) != null)
+            {
+                String[] split = line.split("`");
+                if(split[0].equals(slang_word)){
+                    continue;
                 }
                 data_string += line + "\n";
             }
@@ -249,14 +303,19 @@ public class Utils {
     public static void main(String[] args){
         long start = System.currentTimeMillis();
         Map<String, List<String>>  dictionary = readCloneFile("slang.txt", "slang_clone.txt");
+        long middle = System.currentTimeMillis();
 
         String[] data = {"AAB","Average At Best"};
-        String[] new_data = {"AAB","Number one duplicate x999"};
+        String[] data2 = {"AAB","Average At Best 2"};
+        String[] new_data = {"AAB","Average At Best"};
 
         //cloneOriginFile("slang.txt", "slang_clone.txt");
         addNewSlang("slang_clone.txt", data);
+        addNewSlang("slang_clone.txt", data2);
         //overwriteAllSlang("slang_clone.txt", data, new_data);
+        deleteAllSlangFound("slang_clone.txt", "AAC");
 
-        System.out.println("Duration: " + (System.currentTimeMillis() - start));
+        System.out.println("read clone file: " + (middle - start));
+        System.out.println("Duration: " + (System.currentTimeMillis() - middle));
     }
 }
