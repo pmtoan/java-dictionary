@@ -187,7 +187,40 @@ public class Utils {
         }
     }
 
-    public static void overwriteSlang(String pathFile, String[] oldSlang, String[] newSlang){
+    public static void overwriteAllSlang(String pathFile, String[] oldSlang, String[] newSlang){
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
+
+            String line;
+            String data_string = "";
+            boolean found = false;
+
+            while((line = bufferedReader.readLine()) != null)
+            {
+                if(line.contains(oldSlang[0])){
+                    if(!found){
+                        line = newSlang[0] + "`" + newSlang[1];
+                        found = true;
+                    } else{
+                        continue;
+                    }
+
+                }
+                data_string += line + "\n";
+            }
+
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathFile));
+            bufferedOutputStream.write(data_string.getBytes(StandardCharsets.UTF_8));
+            bufferedOutputStream.flush();
+
+            bufferedReader.close();
+            bufferedOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void updateSlang(String pathFile, String[] oldSlang, String[] newSlang){
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
 
@@ -217,12 +250,12 @@ public class Utils {
         long start = System.currentTimeMillis();
         Map<String, List<String>>  dictionary = readCloneFile("slang.txt", "slang_clone.txt");
 
-        String[] data = {"#1","Number one duplicate"};
-        String[] new_data = {"#1","Number one duplicate x99"};
+        String[] data = {"AAB","Average At Best"};
+        String[] new_data = {"AAB","Number one duplicate x999"};
 
         //cloneOriginFile("slang.txt", "slang_clone.txt");
-        //addNewSlang("slang_clone.txt", data);
-        overwriteSlang("slang_clone.txt", data, new_data);
+        addNewSlang("slang_clone.txt", data);
+        //overwriteAllSlang("slang_clone.txt", data, new_data);
 
         System.out.println("Duration: " + (System.currentTimeMillis() - start));
     }
