@@ -338,11 +338,12 @@ public class Utils {
 
     public static void main(String[] args){
         long start = System.currentTimeMillis();
-        Map<String, List<String>>  dictionary = readCloneFile("slang.txt", "slang_clone.txt");
+        Map<String, List<String>>  dictionary = readCloneFile("s.txt", "slang_clone.txt");
         long middle = System.currentTimeMillis();
+        List<String> list_slang = new ArrayList<>();
+        list_slang.addAll(dictionary.keySet());
 
-        updateSlang("slang_clone.txt", "#1", "Number one", "Number one 2");
-        System.out.println("Read clone file: " + (middle - start));
-        System.out.println("Duration: " + (System.currentTimeMillis() - middle));
+        System.out.println("#1: " + (middle - start));
+        System.out.println("#2: " + (System.currentTimeMillis() - middle));
     }
 }

@@ -22,10 +22,16 @@ import static vn.edu.hcmus.fit.pmtoan.Utils.*;
  * Description: ...
  */
 public class UI implements ActionListener {
+    public static void main(String[] args){
+        UI mainProgram = new UI();
+        mainProgram.showUI();
+    }
+
     private JFrame mainFrame;
 
     JPanel searchPanel;
     JPanel editPanel;
+    JPanel minigamePanel;
 
     private JButton search_func;
     private JButton edit_func;
@@ -34,7 +40,7 @@ public class UI implements ActionListener {
     private JButton slang_search_btn;
     private JButton definition_search_btn;
     private JTextField search_input;
-    private DefaultListModel list_slang;
+    private DefaultListModel list_slang = new DefaultListModel();
     private JList slang_result;
     private DefaultListModel list_history;
     private JList search_history;
@@ -56,13 +62,23 @@ public class UI implements ActionListener {
     private String oldDefinition = "";
     private int selectedRow = -1;
 
+    private JButton random_btn;
+    private JButton minigame1_btn;
+    private JButton minigame2_btn;
+    private JPanel slangOfTheDay;
+    private JPanel minigame1;
+    private JPanel minigame2;
+
+    private int chooserMinigame1;
+    private int chooserMinigame2;
+
     String historyFile = "history.txt";
     String slangOriginFile = "slang.txt";
     String slangCloneFile = "slang_clone.txt";
 
     public UI(){
         dictionary = readCloneFile(slangOriginFile, slangCloneFile);
-
+        list_slang.addAll(dictionary.keySet());
         List<String> history = readHistoryFile(historyFile);
         list_history = new DefaultListModel();
         list_history.addAll(history);
@@ -95,12 +111,15 @@ public class UI implements ActionListener {
 
         searchPanel = searchPanel();
         editPanel = editPanel();
+        minigamePanel = minigamePanel();
 
         workPanel.add(searchPanel);
         workPanel.add(editPanel);
+        workPanel.add(minigamePanel);
 
         searchPanel.setVisible(true);
         editPanel.setVisible(false);
+        minigamePanel.setVisible(false);
 
         mainFrame.add(functionPanel, BorderLayout.WEST);
         mainFrame.add(workPanel, BorderLayout.CENTER);
@@ -117,11 +136,13 @@ public class UI implements ActionListener {
         search_func.setPreferredSize(new Dimension(200,50));
         search_func.setFocusable(false);
         search_func.addActionListener(this);
+
         edit_func = new JButton("EDIT");
         edit_func.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
         edit_func.setPreferredSize(new Dimension(200,50));
         edit_func.setFocusable(false);
         edit_func.addActionListener(this);
+
         minigame_func = new JButton("MINIGAME");
         minigame_func.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
         minigame_func.setPreferredSize(new Dimension(200,50));
@@ -156,7 +177,6 @@ public class UI implements ActionListener {
                 StringBuilder text = new StringBuilder(search_input.getText().trim());
                 text.append(e.getKeyChar());
                 if(e.getKeyChar() == (char)8){
-                    System.out.println(text.length());
                     text.deleteCharAt(text.length() - 1);
                 }
 
@@ -201,8 +221,6 @@ public class UI implements ActionListener {
         label_slang.setFont(new Font(Font.MONOSPACED, Font.BOLD, 20));
         label_slang.setForeground(new Color(15, 175, 15));
 
-        list_slang = new DefaultListModel();
-        list_slang.addAll(dictionary.keySet());
         slang_result = new JList(list_slang);
         slang_result.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
         slang_result.addListSelectionListener(new ListSelectionListener() {
@@ -260,7 +278,7 @@ public class UI implements ActionListener {
         search_history.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
 
         JScrollPane scrollPane3 = new JScrollPane(search_history);
-        scrollPane3.setPreferredSize(new Dimension(150,580));
+        scrollPane3.setPreferredSize(new Dimension(180,580));
 
         delete_history_btn = new JButton("delete history");
         delete_history_btn.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 20));
@@ -300,7 +318,7 @@ public class UI implements ActionListener {
     }
 
     private JPanel editPanel(){
-        int col = 25;
+        int col = 35;
         int size_text = 20;
         String font = Font.MONOSPACED;
 
@@ -321,7 +339,6 @@ public class UI implements ActionListener {
                     text.deleteCharAt(slang_word_input.getCaretPosition());
                     definition_input.setText("");
                 }
-                System.out.println(text);
 
                 fillDataToTable(slangOriginFile, slangCloneFile, text.toString());
             }
@@ -344,7 +361,6 @@ public class UI implements ActionListener {
         definition_input.setFont(new Font(font, Font.PLAIN, size_text));
         definition_input.setLineWrap(true);
         definition_input.setWrapStyleWord(true);
-        definition_input.setPreferredSize(new Dimension(0, 150));
         JScrollPane scroll_definition = new JScrollPane(definition_input);
         scroll_definition.setPreferredSize(new Dimension(0, 150));
 
@@ -445,11 +461,6 @@ public class UI implements ActionListener {
         return result;
     }
 
-    public static void main(String[] args){
-        UI mainProgram = new UI();
-        mainProgram.showUI();
-    }
-
     private void fillDataToTable(String originFile, String cloneFile, String searchText){
         List<Dictionary> listSlang = readCloneFileToTable(originFile, cloneFile);
 
@@ -483,6 +494,332 @@ public class UI implements ActionListener {
         oldDefinition = (String) tableModel.getValueAt(selectedRow, 1);
     }
 
+    private JPanel minigamePanel(){
+        int size_text = 20;
+        String font = Font.MONOSPACED;
+
+        JLabel panel_label = new JLabel("MINI GAME");
+        panel_label.setFont(new Font(font, Font.PLAIN, 40));
+
+
+        random_btn = new JButton("Random Slang");
+        random_btn.setFont(new Font(font, Font.BOLD, size_text));
+        random_btn.setPreferredSize(new Dimension(200,35));
+        random_btn.setFocusable(false);
+
+        minigame1_btn = new JButton("Mini Game 1");
+        minigame1_btn.setFont(new Font(font, Font.BOLD, size_text));
+        minigame1_btn.setPreferredSize(new Dimension(200,35));
+        minigame1_btn.setFocusable(false);
+        minigame1_btn.addActionListener(this);
+
+        minigame2_btn = new JButton("Mini game 2");
+        minigame2_btn.setFont(new Font(font, Font.BOLD, size_text));
+        minigame2_btn.setPreferredSize(new Dimension(200,35));
+        minigame2_btn.setFocusable(false);
+        minigame2_btn.addActionListener(this);
+
+        JPanel button = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        button.add(random_btn);
+        button.add(minigame1_btn);
+        button.add(minigame2_btn);
+
+        slangOfTheDay = slangOfTheDay();
+        minigame1 = minigame1Panel();
+        minigame2 = minigame2Panel();
+        JPanel workPanel = new JPanel();
+        workPanel.add(slangOfTheDay);
+        workPanel.add(minigame1);
+        workPanel.add(minigame2);
+
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx=0;
+        gbc.gridy=0;
+        panel.add(new JPanel().add(panel_label), gbc);
+        gbc.insets = new Insets(40,0,20,0);
+        gbc.gridy=1;
+        panel.add(button, gbc);
+        gbc.gridy=2;
+        panel.add(workPanel, gbc);
+
+        return panel;
+    }
+
+    private JPanel slangOfTheDay(){
+        int size_text = 20;
+        String font = Font.MONOSPACED;
+
+        JLabel panel_label = new JLabel("Slang of the day");
+        panel_label.setFont(new Font(font, Font.PLAIN, 30));
+
+        JLabel slang_label = new JLabel("Slang Word: ");
+        slang_label.setFont(new Font(font, Font.PLAIN, size_text));
+
+        JLabel slang_text = new JLabel();
+        slang_text.setFont(new Font(font, Font.PLAIN, size_text));
+
+        JLabel definition_label = new JLabel("Meaning: ");
+        definition_label.setFont(new Font(font, Font.PLAIN, size_text));
+
+        JTextArea definition_text = new JTextArea();
+        definition_text.setFont(new Font(font, Font.PLAIN, size_text));
+        definition_text.setLineWrap(true);
+        definition_text.setWrapStyleWord(true);
+        definition_text.setPreferredSize(new Dimension(350, 150));
+
+        random_btn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                slangOfTheDay.setVisible(true);
+                minigame1.setVisible(false);
+                minigame2.setVisible(false);
+
+                Random rand = new Random();
+                int randomNumber = rand.nextInt(list_slang.size()) + 1;
+                String slang = list_slang.getElementAt(randomNumber).toString();
+                List<String> values = dictionary.get(slang);
+                String definition = "";
+                for (int i = 0; i < values.size(); i++) {
+                    definition += values.get(i);
+                    definition += i == (values.size() - 1) ? "" : " | ";
+                }
+
+                slang_text.setText(slang);
+                definition_text.setText(definition);
+
+            }
+        });
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10,10,40,10);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        panel.add(panel_label, gbc);
+
+        gbc.insets = new Insets(10,10,10,10);
+        gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(slang_label, gbc);
+        gbc.gridx = 1;
+        panel.add(slang_text, gbc);
+        gbc.gridy = 2;
+        panel.add(definition_text, gbc);
+        gbc.gridx = 0;
+        panel.add(definition_label, gbc);
+
+        return panel;
+    }
+
+    private JPanel minigame1Panel(){
+        int size_text = 20;
+        String font = Font.MONOSPACED;
+
+        JLabel panel_label = new JLabel("Mini game 1");
+        panel_label.setFont(new Font(font, Font.PLAIN, 30));
+
+        JLabel request_label = new JLabel("Choose one correct definition of");
+        request_label.setFont(new Font(font, Font.PLAIN, size_text));
+
+        JLabel question_label = new JLabel();
+        question_label.setFont(new Font(font, Font.PLAIN, size_text));
+
+        JRadioButton ans1 = new JRadioButton ();
+        JRadioButton ans2 = new JRadioButton ();
+        JRadioButton ans3 = new JRadioButton ();
+        JRadioButton ans4 = new JRadioButton ();
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(ans1);
+        group.add(ans2);
+        group.add(ans3);
+        group.add(ans4);
+
+        List<String> slangList = new ArrayList<>();
+        int i = 0;
+        while(i < group.getButtonCount()){
+            int randomNumber = new Random().nextInt(list_slang.size());
+            String slang = list_slang.getElementAt(randomNumber).toString();
+            if(!slangList.contains(slang)){
+                slangList.add(slang);
+                i++;
+            } else{
+                i--;
+            }
+        }
+
+        List<JRadioButton> listCheck = new ArrayList<>();
+        listCheck.add(ans1);
+        listCheck.add(ans2);
+        listCheck.add(ans3);
+        listCheck.add(ans4);
+
+        for(int j=0; j<listCheck.size(); j++){
+            List<String> def = dictionary.get(slangList.get(j));
+            String value = def.get(new Random().nextInt(def.size()));
+            listCheck.get(j).setText(value);
+            listCheck.get(j).setFont(new Font(font, Font.PLAIN, size_text));
+            listCheck.get(j).setFocusable(false);
+        }
+
+        chooserMinigame1 = new Random().nextInt(slangList.size());
+        question_label.setText(slangList.get(chooserMinigame1));
+
+        JButton submit = new JButton("SUBMIT");
+        submit.setFont(new Font(font, Font.PLAIN, size_text));
+        submit.setFocusable(false);
+        submit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int answer = -1;
+
+                if(ans1.isSelected()){
+                    answer = 0;
+                }
+                else if(ans2.isSelected()){
+                    answer = 1;
+                }
+                else if(ans3.isSelected()){
+                    answer = 2;
+                }
+                else if(ans4.isSelected()){
+                    answer = 3;
+                }
+
+                if(answer != -1){
+                    List<String> values = dictionary.get(slangList.get(chooserMinigame1));
+                    String definition = "";
+                    for (int i = 0; i < values.size(); i++) {
+                        definition += values.get(i);
+                        definition += i == (values.size() - 1) ? "" : " | ";
+                    }
+                    System.out.println(slangList);
+                    System.out.println(chooserMinigame1);
+
+                    String str = "Slang word: " + slangList.get(chooserMinigame1) + "\nDefinition: " + definition;
+
+                    if(answer == chooserMinigame1){
+                        JOptionPane.showMessageDialog(minigamePanel, "Correct Answer!\n" + str,
+                                "^_^", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(minigamePanel, "Wrong Answer!\n" + str,
+                                "T_T", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
+                else{
+                    JOptionPane.showMessageDialog(minigamePanel, "Please choose an answer !",
+                            "Warning", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+
+        JButton nextQuestion = new JButton("Next Question");
+        nextQuestion.setFont(new Font(font, Font.PLAIN, size_text));
+        nextQuestion.setFocusable(false);
+        nextQuestion.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                slangList.clear();
+                int i = 0;
+                while(i < group.getButtonCount()){
+                    int randomNumber = new Random().nextInt(list_slang.size());
+                    String slang = list_slang.getElementAt(randomNumber).toString();
+                    if(!slangList.contains(slang)){
+                        slangList.add(slang);
+                        i++;
+                    } else{
+                        i--;
+                    }
+                }
+
+                for(int j=0; j<listCheck.size(); j++){
+                    List<String> def = dictionary.get(slangList.get(j));
+                    String value = def.get(new Random().nextInt(def.size()));
+                    listCheck.get(j).setText(value);
+                }
+
+                chooserMinigame1 = new Random().nextInt(slangList.size());
+                question_label.setText(slangList.get(chooserMinigame1));
+                group.clearSelection();
+            }
+        });
+
+        JPanel button = new JPanel(new FlowLayout(FlowLayout.CENTER, 30,0));
+        button.add(submit);
+        button.add(nextQuestion);
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10,10,40,10);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        panel.add(panel_label, gbc);
+
+        gbc.insets = new Insets(10,10,10,10);
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(request_label, gbc);
+        gbc.gridy = 2;
+        panel.add(question_label, gbc);
+        gbc.gridy = 7;
+        panel.add(button, gbc);
+
+        gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.gridy = 3;
+        panel.add(ans1, gbc);
+        gbc.gridy = 4;
+        panel.add(ans2, gbc);
+        gbc.gridy = 5;
+        panel.add(ans3, gbc);
+        gbc.gridy = 6;
+        panel.add(ans4, gbc);
+
+
+        return panel;
+    }
+
+    private JPanel minigame2Panel(){
+        int size_text = 20;
+        String font = Font.MONOSPACED;
+
+        JLabel panel_label = new JLabel("Mini game 1");
+        panel_label.setFont(new Font(font, Font.PLAIN, 30));
+
+        JLabel request_label = new JLabel("Choose one correct answer");
+        request_label.setFont(new Font(font, Font.PLAIN, size_text));
+
+        JLabel question_label = new JLabel("Where is the correct slang of this definition?");
+        question_label.setFont(new Font(font, Font.PLAIN, size_text));
+
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10,10,40,10);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        panel.add(panel_label, gbc);
+
+        gbc.insets = new Insets(10,10,10,10);
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(request_label, gbc);
+        gbc.gridy = 2;
+        panel.add(question_label, gbc);
+
+        return panel;
+    }
+
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
@@ -490,21 +827,22 @@ public class UI implements ActionListener {
         if (search_func.equals(source)) {
             searchPanel.setVisible(true);
             editPanel.setVisible(false);
+            minigamePanel.setVisible(false);
 
             search_input.setText("");
             definition.setText("");
+
             dictionary = readCloneFile(slangOriginFile, slangCloneFile);
             list_slang.addAll(dictionary.keySet());
         }
         else if (edit_func.equals(source)) {
             searchPanel.setVisible(false);
             editPanel.setVisible(true);
+            minigamePanel.setVisible(false);
 
             slang_word_input.setText("");
             definition_input.setText("");
             fillDataToTable(slangOriginFile, slangCloneFile, "");
-        }
-        else if (minigame_func.equals(source)) {
         }
         else if(source.equals(slang_search_btn)){
             HashSet<String> keySet = new HashSet<>(dictionary.keySet());
@@ -649,6 +987,29 @@ public class UI implements ActionListener {
                         "Reset done !", "Notification",
                         JOptionPane.INFORMATION_MESSAGE);
             }
+        }
+        else if (minigame_func.equals(source)) {
+            searchPanel.setVisible(false);
+            editPanel.setVisible(false);
+            minigamePanel.setVisible(true);
+
+            slangOfTheDay.setVisible(true);
+            minigame1.setVisible(false);
+            minigame2.setVisible(false);
+        }
+        else if(source.equals(minigame1_btn)){
+            slangOfTheDay.setVisible(false);
+            minigame1.setVisible(true);
+            minigame2.setVisible(false);
+
+
+        }
+        else if(source.equals(minigame2_btn)){
+            slangOfTheDay.setVisible(false);
+            minigame1.setVisible(false);
+            minigame2.setVisible(true);
+
+
         }
     }
 }
