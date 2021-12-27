@@ -3,16 +3,15 @@ package vn.edu.hcmus.fit.pmtoan;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Array;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static vn.edu.hcmus.fit.pmtoan.Utils.*;
 
@@ -53,6 +52,9 @@ public class UI implements ActionListener {
 
     private DefaultTableModel tableModel;
     private JTable slangTable;
+    private String oldSlang = "";
+    private String oldDefinition = "";
+    private int selectedRow = -1;
 
     String historyFile = "history.txt";
     String slangOriginFile = "slang.txt";
@@ -314,16 +316,14 @@ public class UI implements ActionListener {
             @Override
             public void keyTyped(KeyEvent e) {
                 StringBuilder text = new StringBuilder(slang_word_input.getText().trim());
-                text.append(e.getKeyChar());
+                text.insert(slang_word_input.getCaretPosition(), e.getKeyChar());
                 if(e.getKeyChar() == (char)8){
-                    text.deleteCharAt(text.length() - 1);
+                    text.deleteCharAt(slang_word_input.getCaretPosition());
                     definition_input.setText("");
                 }
+                System.out.println(text);
 
-                HashSet<String> keySet = new HashSet<>(dictionary.keySet());
-                List<String> listResult = searchBySlang(text.toString(), keySet);
-                list_slang_edit.clear();
-                list_slang_edit.addAll(listResult);
+                fillDataToTable(slangOriginFile, slangCloneFile, text.toString());
             }
 
             @Override
@@ -405,53 +405,27 @@ public class UI implements ActionListener {
         btn.add(reset_btn);
 
         //------------------------- List slang -------------------------\\
-        JLabel search_slang = new JLabel("Search slang");
-        search_slang.setFont(new Font(font, Font.PLAIN, size_text));
-        JTextField search_input_edit = new JTextField(15);
-        search_input_edit.setFont(new Font(font, Font.PLAIN, size_text));
+        String[] colName = {"Slang", "Definition"};
+        String[][] data = {};
+        tableModel = new DefaultTableModel(data, colName);
 
-        list_slang_edit = new DefaultListModel();
-        list_slang_edit.addAll(dictionary.keySet());
-
-        list_edit = new JList(list_slang_edit);
-        list_edit.setFont(new Font(font, Font.PLAIN, size_text));
-        list_edit.addListSelectionListener(new ListSelectionListener() {
+        slangTable = new JTable(tableModel);
+        slangTable.setFont(new Font(font, Font.PLAIN, 17));
+        slangTable.getTableHeader().setFont(new Font(font, Font.PLAIN, size_text));
+        slangTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+        slangTable.getColumnModel().getColumn(1).setPreferredWidth(250);
+        DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer();
+        cellRenderer.setHorizontalAlignment(JLabel.CENTER);
+        slangTable.getColumnModel().getColumn(0).setCellRenderer(cellRenderer);
+        slangTable.addMouseListener(new MouseAdapter() {
             @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if(!list_edit.isSelectionEmpty() && !e.getValueIsAdjusting()) {
-                    int select = list_edit.getSelectedIndex();
-                    String key = list_slang_edit.getElementAt(select).toString();
-
-                    String def = "";
-                    List<String> values = dictionary.get(key);
-                    for(int i=0; i< values.size(); i++){
-                        def += values.get(i);
-                        def += i == (values.size() - 1) ? "" : " | ";
-                    }
-
-
-                    slang_word_input.setText(key);
-                    definition_input.setText(def);
-                }
+            public void mouseClicked(MouseEvent e) {
+                actionWhenInteractTable();
             }
         });
 
-        JScrollPane scroll_list = new JScrollPane(list_edit);
-        scroll_list.setPreferredSize(new Dimension(250,300));
-
-        JPanel search_panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc_search = new GridBagConstraints();
-        gbc_search.insets = new Insets(0,10,5,10);
-        gbc_search.gridx=0;
-        gbc_search.gridy=0;
-        search_panel.add(search_slang, gbc_search);
-        gbc_search.gridx=0;
-        gbc_search.gridy=1;
-        search_panel.add(search_input_edit, gbc_search);
-        gbc_search.gridx=1;
-        gbc_search.gridy=1;
-        gbc_search.gridheight = 2;
-        search_panel.add(scroll_list, gbc_search);
+        JScrollPane scroll_list = new JScrollPane(slangTable);
+        scroll_list.setPreferredSize(new Dimension(550,300));
 
         //------------------------- Edit panel setup -------------------------\\
         JPanel result = new JPanel();
@@ -466,7 +440,7 @@ public class UI implements ActionListener {
         gbc.gridy = 2;
         result.add(btn, gbc);
         gbc.gridy = 3;
-        result.add(search_panel, gbc);
+        result.add(scroll_list, gbc);
 
         return result;
     }
@@ -476,6 +450,39 @@ public class UI implements ActionListener {
         mainProgram.showUI();
     }
 
+    private void fillDataToTable(String originFile, String cloneFile, String searchText){
+        List<Dictionary> listSlang = readCloneFileToTable(originFile, cloneFile);
+
+        if(!searchText.equals("")){
+            List<Dictionary> listSearch = new ArrayList<>();
+
+            for(Dictionary dic : listSlang){
+                if(dic.getSlang().toLowerCase().contains(searchText.toLowerCase())){
+                    listSearch.add(dic);
+                }
+            }
+            listSlang = listSearch;
+        }
+
+        tableModel.setRowCount(0);
+        for (Dictionary slang : listSlang) {
+            tableModel.addRow(new Object[]{slang.getSlang(), slang.getDefinition()});
+        }
+    }
+
+    private void actionWhenInteractTable() {
+        selectedRow = slangTable.getSelectedRow();
+
+        String slang = (String) tableModel.getValueAt(selectedRow, 0);
+        String definition = (String) tableModel.getValueAt(selectedRow, 1);
+
+        slang_word_input.setText(slang);
+        definition_input.setText(definition);
+
+        oldSlang = (String) tableModel.getValueAt(selectedRow, 0);
+        oldDefinition = (String) tableModel.getValueAt(selectedRow, 1);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
@@ -483,10 +490,19 @@ public class UI implements ActionListener {
         if (search_func.equals(source)) {
             searchPanel.setVisible(true);
             editPanel.setVisible(false);
+
+            search_input.setText("");
+            definition.setText("");
+            dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+            list_slang.addAll(dictionary.keySet());
         }
         else if (edit_func.equals(source)) {
             searchPanel.setVisible(false);
             editPanel.setVisible(true);
+
+            slang_word_input.setText("");
+            definition_input.setText("");
+            fillDataToTable(slangOriginFile, slangCloneFile, "");
         }
         else if (minigame_func.equals(source)) {
         }
@@ -511,57 +527,128 @@ public class UI implements ActionListener {
             String slang = slang_word_input.getText();
             String definition = definition_input.getText();
 
-            if(dictionary.containsKey(slang)){
-                int choose = JOptionPane.showConfirmDialog(editPanel,
-                        "Slang is exist! Do you want to overwrite all existing slang ?", "Warning",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            boolean done = false;
 
-                if(choose == JOptionPane.YES_OPTION){
-                    overwriteAllSlang(slangCloneFile, slang, definition);
+            if(dictionary.containsKey(slang)){
+                boolean validDefinition = true;
+
+                for(String value : dictionary.get(slang)){
+                    List<String> split = List.of(definition.split("\\|"));
+                    if (split.contains(value)) {
+                        validDefinition = false;
+                        break;
+                    }
+                }
+                if(!validDefinition) {
+                    JOptionPane.showMessageDialog(editPanel,
+                            "Slang and definition is exist! Invalid ADD action !", "Warning",
+                            JOptionPane.WARNING_MESSAGE);
                 }
                 else {
-                    choose = JOptionPane.showConfirmDialog(editPanel,
-                            "Do you want to duplicate this slang ?", "Warning",
+
+
+                    int choose = JOptionPane.showConfirmDialog(editPanel,
+                            "Slang is exist! Do you want to overwrite all existing slang ?", "Warning",
                             JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
-                    if(choose == JOptionPane.YES_OPTION){
-                        addNewSlang(slangCloneFile, slang, definition);
+                    if (choose == JOptionPane.YES_OPTION) {
+                        overwriteAllSlang(slangCloneFile, slang, definition);
+                        done = true;
+                    } else {
+                        choose = JOptionPane.showConfirmDialog(editPanel,
+                                "Do you want to duplicate this slang ?", "Warning",
+                                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                        if (choose == JOptionPane.YES_OPTION) {
+                            addNewSlang(slangCloneFile, slang, definition);
+                            done = true;
+                        }
                     }
                 }
             } else {
                 addNewSlang(slangCloneFile, slang, definition);
+                done = true;
             }
 
-            dictionary = readCloneFile(slangOriginFile, slangCloneFile);
-            list_slang_edit.addAll(dictionary.keySet());
-            slang_word_input.setText("");
-            definition_input.setText("");
-            JOptionPane.showMessageDialog(editPanel,
-                    "Add slang word success !", "Notification", JOptionPane.INFORMATION_MESSAGE);
+            if(done){
+                slang_word_input.setText("");
+                definition_input.setText("");
+                JOptionPane.showMessageDialog(editPanel,
+                        "Add slang word success !", "Notification", JOptionPane.INFORMATION_MESSAGE);
+
+                fillDataToTable(slangOriginFile, slangCloneFile, "");
+            }
         }
         else if(source.equals(update_btn)){
-            String slang = slang_word_input.getText();
-            String definition = definition_input.getText();
+            if(selectedRow <= tableModel.getRowCount() && selectedRow >= 0 &&
+            !"".equals(oldSlang) && !"".equals(oldDefinition)) {
+                String newSlang = slang_word_input.getText();
+                String newDefinition = definition_input.getText();
 
-           // updateSlang(slangOriginFile, );
+                if (!oldSlang.equals(newSlang)) {
+                    JOptionPane.showMessageDialog(editPanel,
+                            "Different slang word is not accepted, please hold the old slang name, " +
+                                    "update function is just modify definition!", "Notification",
+                            JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    updateSlang(slangCloneFile, oldSlang, oldDefinition, newDefinition);
 
-            JOptionPane.showMessageDialog(editPanel,
-                    "Update success !", "Notification", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(editPanel,
+                            "Update success !", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
-            slang_word_input.setText("");
-            definition_input.setText("");
+                    slang_word_input.setText("");
+                    definition_input.setText("");
+                    fillDataToTable(slangOriginFile, slangCloneFile, "");
+                }
+            } else {
+                JOptionPane.showMessageDialog(editPanel,
+                        "Please choose correctly slang you want to update ?", "Warning",
+                        JOptionPane.WARNING_MESSAGE);
+            }
         }
         else if(source.equals(delete_btn)){
+            if(selectedRow <= tableModel.getRowCount() && selectedRow >= 0 &&
+                    !"".equals(slang_word_input.getText()) && !"".equals(definition_input.getText())) {
+                String slang = (String) tableModel.getValueAt(selectedRow, 0);
+                String definition = (String) tableModel.getValueAt(selectedRow, 1);
 
+                int choose = JOptionPane.showConfirmDialog(editPanel,
+                        "Do you want to delete this slang ?", "Warning",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
-            slang_word_input.setText("");
-            definition_input.setText("");
+                if(choose == JOptionPane.YES_OPTION){
+                    deleteSlang(slangCloneFile, slang, definition);
+
+                    slang_word_input.setText("");
+                    definition_input.setText("");
+                    fillDataToTable(slangOriginFile, slangCloneFile, "");
+
+                    JOptionPane.showMessageDialog(editPanel,
+                            "Delete done !", "Notification", JOptionPane.INFORMATION_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(editPanel,
+                        "Please choose correctly slang you want to delete ?", "Warning",
+                        JOptionPane.WARNING_MESSAGE);
+            }
         }
         else if(source.equals(reset_btn)){
+            int choose = JOptionPane.showConfirmDialog(editPanel,
+                    "Do you want to reset to origin file ?", "Warning",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
+            if (choose == JOptionPane.YES_OPTION) {
+                deleteCloneFile(slangCloneFile);
+                dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+                fillDataToTable(slangOriginFile, slangCloneFile, "");
 
-            slang_word_input.setText("");
-            definition_input.setText("");
+                slang_word_input.setText("");
+                definition_input.setText("");
+
+                JOptionPane.showMessageDialog(editPanel,
+                        "Reset done !", "Notification",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
         }
     }
 }

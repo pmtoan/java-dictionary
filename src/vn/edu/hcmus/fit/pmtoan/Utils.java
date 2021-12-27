@@ -66,6 +66,13 @@ public class Utils {
         }
     }
 
+    public static void deleteCloneFile(String pathClone) {
+        File cloneFile = new File(pathClone);
+        if (cloneFile.isFile()) {
+            cloneFile.delete();
+        }
+    }
+
     public static Map<String, List<String>> readCloneFile(String pathOrigin, String pathClone){
         Map<String, List<String>> dictionary = new HashMap<>();
         try {
@@ -113,7 +120,7 @@ public class Utils {
             }
 
             BufferedReader bufferedReader = new BufferedReader(new FileReader(pathClone));
-
+            bufferedReader.readLine();
             String line;
             while((line = bufferedReader.readLine()) != null)
             {
@@ -257,7 +264,8 @@ public class Utils {
 
             while((line = bufferedReader.readLine()) != null)
             {
-                if(line.equals(oldSlang) && line.equals(oldDefinition)){
+                String[] split = line.split("`");
+                if(split[0].equals(oldSlang) && split[1].equals(oldDefinition)){
                     line = oldSlang + "`" + newDefinition;
                 }
                 data_string += line + "\n";
@@ -333,12 +341,7 @@ public class Utils {
         Map<String, List<String>>  dictionary = readCloneFile("slang.txt", "slang_clone.txt");
         long middle = System.currentTimeMillis();
 
-        List<Dictionary> d = readCloneFileToTable("slang.txt", "slang_clone.txt");
-        for(Dictionary da : d){
-            System.out.println(da.getSlang() + "  " + da.getDefinition());
-        }
-
-        overwriteAllSlang("slang_clone.txt", "toan", "definition");
+        updateSlang("slang_clone.txt", "#1", "Number one", "Number one 2");
         System.out.println("Read clone file: " + (middle - start));
         System.out.println("Duration: " + (System.currentTimeMillis() - middle));
     }
