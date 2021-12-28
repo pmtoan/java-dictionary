@@ -1,6 +1,5 @@
 package vn.edu.hcmus.fit.pmtoan;
 
-import javax.swing.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -307,43 +306,5 @@ public class Utils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void deleteAllSlangFound(String pathFile, String slang_word){
-        try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
-
-            String line;
-            String data_string = "";
-
-            while((line = bufferedReader.readLine()) != null)
-            {
-                String[] split = line.split("`");
-                if(split[0].equals(slang_word)){
-                    continue;
-                }
-                data_string += line + "\n";
-            }
-
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathFile));
-            bufferedOutputStream.write(data_string.getBytes(StandardCharsets.UTF_8));
-            bufferedOutputStream.flush();
-
-            bufferedReader.close();
-            bufferedOutputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void main(String[] args){
-        long start = System.currentTimeMillis();
-        Map<String, List<String>>  dictionary = readCloneFile("s.txt", "slang_clone.txt");
-        long middle = System.currentTimeMillis();
-        List<String> list_slang = new ArrayList<>();
-        list_slang.addAll(dictionary.keySet());
-
-        System.out.println("#1: " + (middle - start));
-        System.out.println("#2: " + (System.currentTimeMillis() - middle));
     }
 }
