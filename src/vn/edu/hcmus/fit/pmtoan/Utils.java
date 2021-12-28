@@ -12,7 +12,7 @@ import java.util.*;
  * Description: ...
  */
 public class Utils {
-    public static Map<String, List<String>> readOriginFile(String pathFile){
+    public static Map<String, List<String>> readFileToDictionary(String pathFile){
         Map<String, List<String>> dictionary = new HashMap<>();
         try {
             File file = new File(pathFile);
@@ -27,11 +27,14 @@ public class Utils {
                     continue;
 
                 List<String> values = new ArrayList<>();
+
+                if(dictionary.containsKey(split[0])){
+                    values = dictionary.get(split[0]);
+                }
+
                 for(String value : split[1].split("\\|")){
                     values.add(value.trim());
                 }
-                System.out.println(split[0]);
-                System.out.println(values);
 
                 dictionary.put(split[0], values);
             }
@@ -73,39 +76,12 @@ public class Utils {
     }
 
     public static Map<String, List<String>> readCloneFile(String pathOrigin, String pathClone){
-        Map<String, List<String>> dictionary = new HashMap<>();
-        try {
-            File cloneFile = new File(pathClone);
-            if(!cloneFile.isFile()){
-                cloneOriginFile(pathOrigin, pathClone);
-            }
-
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathClone));
-
-            String line;
-            while((line = bufferedReader.readLine()) != null)
-            {
-                String[] split = line.split("`");
-                if(split.length != 2)
-                    continue;
-
-                List<String> values = new ArrayList<>();
-
-                if(dictionary.containsKey(split[0])){
-                    values = dictionary.get(split[0]);
-                }
-
-                for(String value : split[1].split("\\|")){
-                    values.add(value.trim());
-                }
-
-                dictionary.put(split[0], values);
-            }
-
-            bufferedReader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        File cloneFile = new File(pathClone);
+        if(!cloneFile.isFile()){
+            cloneOriginFile(pathOrigin, pathClone);
         }
+
+        Map<String, List<String>> dictionary = readFileToDictionary(pathClone);
 
         return dictionary;
     }
@@ -118,7 +94,7 @@ public class Utils {
                 cloneOriginFile(pathOrigin, pathClone);
             }
 
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathClone));
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathClone, StandardCharsets.UTF_8));
             bufferedReader.readLine();
             String line;
             while((line = bufferedReader.readLine()) != null)
@@ -171,7 +147,7 @@ public class Utils {
             if(!file.isFile()){
                 file.createNewFile();
             } else{
-                BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+                BufferedReader bufferedReader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
                 String line = bufferedReader.readLine();
                 if(line != null){
                     String[] split = line.split("`");
@@ -223,32 +199,37 @@ public class Utils {
 
     public static void overwriteAllSlang(String pathFile, String oldSlang, String newDefinition){
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
+            File tempFile = File.createTempFile("tmp", "");
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile, StandardCharsets.UTF_8));
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
 
             String line;
-            String data_string = "";
             boolean found = false;
 
             while((line = bufferedReader.readLine()) != null)
             {
-                String[] split = line.split("`");
-                if(split[0].equals(oldSlang)){
-                    if(!found){
-                        line = oldSlang + "`" + newDefinition;
-                        found = true;
-                    } else{
-                        continue;
+                if(line.startsWith(oldSlang)) {
+                    String[] split = line.split("`");
+                    if(split[0].equals(oldSlang)) {
+                        if (!found) {
+                            line = oldSlang + "`" + newDefinition;
+                            found = true;
+                        } else {
+                            continue;
+                        }
                     }
                 }
-                data_string += line + "\n";
+                line += "\n";
+                bufferedOutputStream.write(line.getBytes(StandardCharsets.UTF_8));
+                bufferedOutputStream.flush();
             }
-
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathFile));
-            bufferedOutputStream.write(data_string.getBytes(StandardCharsets.UTF_8));
-            bufferedOutputStream.flush();
 
             bufferedReader.close();
             bufferedOutputStream.close();
+
+            File myFile = new File(pathFile);
+            myFile.delete();
+            tempFile.renameTo(new File(pathFile));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -256,26 +237,31 @@ public class Utils {
 
     public static void updateSlang(String pathFile,  String oldSlang, String oldDefinition, String newDefinition){
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
+            File tempFile = File.createTempFile("tmp", "");
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile, StandardCharsets.UTF_8));
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
 
             String line;
-            String data_string = "";
 
             while((line = bufferedReader.readLine()) != null)
             {
-                String[] split = line.split("`");
-                if(split[0].equals(oldSlang) && split[1].equals(oldDefinition)){
-                    line = oldSlang + "`" + newDefinition;
+                if(line.startsWith(oldSlang)) {
+                    String[] split = line.split("`");
+                    if (split[0].equals(oldSlang) && split[1].equals(oldDefinition)) {
+                        line = oldSlang + "`" + newDefinition;
+                    }
                 }
-                data_string += line + "\n";
+                line += "\n";
+                bufferedOutputStream.write(line.getBytes(StandardCharsets.UTF_8));
+                bufferedOutputStream.flush();
             }
-
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathFile));
-            bufferedOutputStream.write(data_string.getBytes(StandardCharsets.UTF_8));
-            bufferedOutputStream.flush();
 
             bufferedReader.close();
             bufferedOutputStream.close();
+
+            File myFile = new File(pathFile);
+            myFile.delete();
+            tempFile.renameTo(new File(pathFile));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -283,26 +269,32 @@ public class Utils {
 
     public static void deleteSlang(String pathFile, String slang, String definition){
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile));
+            File tempFile = File.createTempFile("tmp", "");
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(pathFile, StandardCharsets.UTF_8));
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
 
             String line;
-            String data_string = "";
 
             while((line = bufferedReader.readLine()) != null)
             {
-                String[] split = line.split("`");
-                if(split[0].equals(slang) && split[1].equals(definition)){
-                    continue;
+                if(line.startsWith(slang)) {
+                    String[] split = line.split("`");
+                    if(split[0].equals(slang) && split[1].equals(definition)){
+                        continue;
+                    }
                 }
-                data_string += line + "\n";
-            }
 
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathFile));
-            bufferedOutputStream.write(data_string.getBytes(StandardCharsets.UTF_8));
-            bufferedOutputStream.flush();
+                line += "\n";
+                bufferedOutputStream.write(line.getBytes(StandardCharsets.UTF_8));
+                bufferedOutputStream.flush();
+            }
 
             bufferedReader.close();
             bufferedOutputStream.close();
+
+            File myFile = new File(pathFile);
+            myFile.delete();
+            tempFile.renameTo(new File(pathFile));
         } catch (IOException e) {
             e.printStackTrace();
         }

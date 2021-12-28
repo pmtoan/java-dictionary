@@ -5,6 +5,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.xml.crypto.dsig.keyinfo.KeyValue;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -24,7 +25,7 @@ public class UI implements ActionListener {
         mainProgram.showUI();
     }
 
-    Map<String, List<String>> dictionary = new HashMap<>();
+    Map<String, List<String>> dictionary;
 
     private JFrame mainFrame;
 
@@ -34,7 +35,7 @@ public class UI implements ActionListener {
     private JButton definitionSearchButton;
     private JTextField searchInput;
     private JTextArea definition;
-    private DefaultListModel slangListModel = new DefaultListModel();
+    private DefaultListModel slangListModel;
     private JList slangResult;
     private DefaultListModel historyListModel;
     private JList searchHistory;
@@ -71,10 +72,11 @@ public class UI implements ActionListener {
 
     public UI(){
         dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+        slangListModel = new DefaultListModel();
         slangListModel.addAll(dictionary.keySet());
-        List<String> history = readHistoryFile(historyFile);
         historyListModel = new DefaultListModel();
-        historyListModel.addAll(history);
+        historyListModel.addAll(readHistoryFile(historyFile));
+
         prepareGUI();
     }
 
@@ -91,7 +93,7 @@ public class UI implements ActionListener {
                         JOptionPane.YES_NO_OPTION);
                 if(result == JOptionPane.YES_OPTION){
                     mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                } else if (result == JOptionPane.NO_OPTION){
+                } else{
                     mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
                 }
             }
@@ -167,7 +169,7 @@ public class UI implements ActionListener {
         searchInput.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
-                StringBuilder text = new StringBuilder(searchInput.getText().trim());
+                StringBuilder text = new StringBuilder(searchInput.getText());
                 text.insert(searchInput.getCaretPosition(), e.getKeyChar());
                 if(e.getKeyChar() == (char)8){
                     text.deleteCharAt(searchInput.getCaretPosition());
@@ -326,11 +328,10 @@ public class UI implements ActionListener {
         slangInput.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
-                StringBuilder text = new StringBuilder(slangInput.getText().trim());
+                StringBuilder text = new StringBuilder(slangInput.getText());
                 text.insert(slangInput.getCaretPosition(), e.getKeyChar());
                 if(e.getKeyChar() == (char)8){
                     text.deleteCharAt(slangInput.getCaretPosition());
-
                 }
 
                 fillDataToTable(slangOriginFile, slangCloneFile, text.toString());

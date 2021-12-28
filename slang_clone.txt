@@ -1,5 +1,5 @@
 Slag`Meaning
-#1`Number one duplicate x999
+#1`Number one
 $`Dollar| money
 $_$`Has money
 %)`Drunk| giddy
@@ -255,6 +255,8 @@ A7A`Frusration, anger
 A7X`Avenged Sevenfold (band)
 AA`Alcoholics Anonymous| African-American| Automobile Association
 AAA`American Automobile Association| Battery size
+AAB`Average At Best
+AAC`Apple Audio Compression
 AAF`Always and Forever
 AAK`Alive And Kicking
 AAMOF`As A Matter Of Fact
@@ -2063,6 +2065,7 @@ F8`Fate
 F9`Fine
 F@`Fat
 FAA`Federal Aviation Administration
+FAAB`Female-Assigned At Birth
 FAAK`Falling Asleep At Keyboard
 FAB`Fabulous
 FABU`Fabulous
@@ -4060,6 +4063,7 @@ M33T`Meet
 M4W`Man looking for a woman
 M8`Mate
 MA`Mom alert| Master of Arts
+MAAB`Male-Assigned At Birth
 MAC`Media Access Control| Macintosh
 MACHING`Going at maximum Speed
 MACK`Flirt
@@ -7656,5 +7660,3 @@ ZZZ`Sleepy| bored| tired
 ~`Denotes Sarcasm| Put At The End Of A Word To Make It Longer
 Æ`Registered Trademark Symbol
 ô`Trademark
-AAB`Average At Best
-AAB`Average At Best 2
