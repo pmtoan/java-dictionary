@@ -25,6 +25,8 @@ public class UI implements ActionListener {
     }
 
     Map<String, List<String>> dictionary;
+    Map<String, List<String>> defMap;
+    Trie slangStore;
 
     private JFrame mainFrame;
 
@@ -70,9 +72,15 @@ public class UI implements ActionListener {
     String slangCloneFile = "slang_clone.txt";
 
     public UI(){
-        dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+        dictionary = new HashMap<>();
+        defMap = new HashMap<>();
+        readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
+        slangStore = new Trie();
+        slangStore.addList(dictionary.keySet());
+
         slangListModel = new DefaultListModel();
         slangListModel.addAll(dictionary.keySet());
+
         historyListModel = new DefaultListModel();
         historyListModel.addAll(readHistoryFile(historyFile));
 
@@ -175,7 +183,7 @@ public class UI implements ActionListener {
                 }
 
                 HashSet<String> keySet = new HashSet<>(dictionary.keySet());
-                List<String> listResult = searchBySlang(text.toString(), keySet);
+                List<String> listResult = searchBySlang(text.toString(), slangStore);
                 slangListModel.clear();
                 slangListModel.addAll(listResult);
             }
@@ -990,19 +998,23 @@ public class UI implements ActionListener {
             searchInput.setText("");
             definition.setText("");
 
-            dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+            dictionary = new HashMap<>();
+            defMap = new HashMap<>();
+            readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
             slangListModel.addAll(dictionary.keySet());
         }
         else if(source.equals(slangSearchButton)){
             HashSet<String> keySet = new HashSet<>(dictionary.keySet());
-            List<String> listResult = searchBySlang(searchInput.getText(), keySet);
+            List<String> listResult = searchBySlang(searchInput.getText(), slangStore);
             definition.setText("");
             slangListModel.clear();
             slangListModel.addAll(listResult);
         }
         else if(source.equals(definitionSearchButton)){
-            List<String> listResult = searchByDefinition(searchInput.getText(), dictionary);
+            List<String> listResult = searchByDefinition(searchInput.getText(), defMap);
+
             definition.setText("");
+
             slangListModel.clear();
             slangListModel.addAll(listResult);
         }
@@ -1076,7 +1088,9 @@ public class UI implements ActionListener {
                         "Add slang word success !", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
                 fillDataToTable(slangOriginFile, slangCloneFile, "");
-                dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+                dictionary = new HashMap<>();
+                defMap = new HashMap<>();
+                readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
             }
         }
         else if(source.equals(updateButton)){
@@ -1114,7 +1128,9 @@ public class UI implements ActionListener {
                         slangInput.setText("");
                         definitionInput.setText("");
                         fillDataToTable(slangOriginFile, slangCloneFile, "");
-                        dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+                        dictionary = new HashMap<>();
+                        defMap = new HashMap<>();
+                        readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
                     }
                 }
             } else {
@@ -1143,7 +1159,9 @@ public class UI implements ActionListener {
                     definitionInput.setText("");
 
                     fillDataToTable(slangOriginFile, slangCloneFile, "");
-                    dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+                    dictionary = new HashMap<>();
+                    defMap = new HashMap<>();
+                    readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
                 }
             } else {
                 JOptionPane.showMessageDialog(editPanel,
@@ -1167,7 +1185,9 @@ public class UI implements ActionListener {
                 definitionInput.setText("");
 
                 fillDataToTable(slangOriginFile, slangCloneFile, "");
-                dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+                dictionary = new HashMap<>();
+                defMap = new HashMap<>();
+                readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
             }
         }
         else if(source.equals(miniGamePanelButton)) {
@@ -1179,7 +1199,9 @@ public class UI implements ActionListener {
             miniGame1Panel.setVisible(false);
             miniGame2Panel.setVisible(false);
 
-            dictionary = readCloneFile(slangOriginFile, slangCloneFile);
+            dictionary = new HashMap<>();
+            defMap = new HashMap<>();
+            readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
             slangListModel.addAll(dictionary.keySet());
         }
         else if(source.equals(slangOfTheDayButton)){

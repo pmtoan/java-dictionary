@@ -11,8 +11,9 @@ import java.util.*;
  * Description: ...
  */
 public class Utils {
-    public static Map<String, List<String>> readFileToDictionary(String pathFile){
-        Map<String, List<String>> dictionary = new HashMap<>();
+    //-------------------------------------- Initial Data ---------------------------------------------\\
+    public static void readFileToMap(String pathFile,
+               Map<String, List<String>> slangMap, Map<String, List<String>> definitionMap){
         try {
             File file = new File(pathFile);
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
@@ -25,25 +26,39 @@ public class Utils {
                 if(split.length != 2)
                     continue;
 
-                List<String> values = new ArrayList<>();
+                List<String> defList = new ArrayList<>();
 
-                if(dictionary.containsKey(split[0])){
-                    values = dictionary.get(split[0]);
+                if(slangMap.containsKey(split[0])){
+                    defList = slangMap.get(split[0]);
                 }
+                // this is def 1 | this is def 2 -> split[1]
+                for(String value : split[1].split("\\|")){
+                    defList.add(value.trim());
+                }
+                slangMap.put(split[0], defList);
 
                 for(String value : split[1].split("\\|")){
-                    values.add(value.trim());
-                }
+                    for(String def : value.trim().split(" ")) {
+                        List<String> slangList = new ArrayList<>();
+                        String definition = def.trim().toLowerCase();
 
-                dictionary.put(split[0], values);
+                        if(definitionMap.containsKey(definition)){
+                            if(!definitionMap.get(definition).contains(split[0])){
+                                definitionMap.get(definition).add(split[0]);
+                            }
+                        } else{
+                            slangList.add(split[0]);
+                            definitionMap.put(def.toLowerCase(), slangList);
+                        }
+
+                    }
+                }
             }
 
             bufferedReader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return dictionary;
     }
 
     public static void cloneOriginFile(String pathOrigin, String pathClone){
@@ -54,11 +69,13 @@ public class Utils {
             }
 
             BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(pathOrigin));
-            byte[] bytes_array = bufferedInputStream.readAllBytes();
-
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(pathClone));
-            bufferedOutputStream.write(bytes_array);
-            bufferedOutputStream.flush();
+
+            byte[] buffer = new byte[1024*1024];
+            int length;
+            while ((length = bufferedInputStream.read(buffer)) > 0) {
+                bufferedOutputStream.write(buffer, 0, length);
+            }
 
             bufferedInputStream.close();
             bufferedOutputStream.close();
@@ -74,15 +91,14 @@ public class Utils {
         }
     }
 
-    public static Map<String, List<String>> readCloneFile(String pathOrigin, String pathClone){
+    public static void readCloneFile(String pathOrigin, String pathClone,
+                                   Map<String, List<String>> slangMap, Map<String, List<String>> definitionMap){
         File cloneFile = new File(pathClone);
         if(!cloneFile.isFile()){
             cloneOriginFile(pathOrigin, pathClone);
         }
 
-        Map<String, List<String>> dictionary = readFileToDictionary(pathClone);
-
-        return dictionary;
+        readFileToMap(pathClone, slangMap, definitionMap);
     }
 
     public static List<Dictionary> readCloneFileToTable(String pathOrigin, String pathClone){
@@ -113,25 +129,33 @@ public class Utils {
         return dictionary;
     }
 
-    public static List<String> searchBySlang(String pattern, HashSet<String> keySet){
-        List<String> list = new ArrayList<>();
+    //-------------------------------------- SEARCH ---------------------------------------------\\
 
-        for(String key : keySet){
-            if(key.toLowerCase(Locale.ROOT).contains(pattern.toLowerCase(Locale.ROOT))){
-                list.add(key);
-            }
-        }
-
-        return list;
+    public static List<String> searchBySlang(String pattern, Trie keyStore){
+        return keyStore.findSimilarWords(pattern);
     }
 
-    public static List<String> searchByDefinition(String pattern, Map<String, List<String>> dictionary){
+    public static List<String> searchByDefinition(String pattern, Map<String, List<String>> defMap){
         List<String> list = new ArrayList<>();
 
-        for(String key : dictionary.keySet()){
-            for(String value : dictionary.get(key)){
-                if(value.toLowerCase().contains(pattern.toLowerCase())){
-                    list.add(key);
+        String[] parse = pattern.trim().split(" ", 2);
+        String firstElement = parse[0];
+
+        if(defMap.containsKey(firstElement)){
+            list.addAll(defMap.get(firstElement));
+        }
+
+        if(parse.length > 1){
+            String[] elements = parse[1].split(" ");
+            System.out.println(Arrays.toString(elements));
+            for(String element : elements){
+                if(!element.equals(" ") && !element.equals("")){
+                    if(defMap.containsKey(element.trim())){
+                        list.retainAll(defMap.get(element.trim()));
+                    }else{
+                        list.clear();
+                        break;
+                    }
                 }
             }
         }
@@ -151,10 +175,7 @@ public class Utils {
                 if(line != null){
                     String[] split = line.split("`");
 
-                    for(String key : split)
-                    {
-                        list.add(key);
-                    }
+                    list.addAll(List.of(split));
                 }
                 bufferedReader.close();
             }
@@ -176,12 +197,13 @@ public class Utils {
             String data = key.equals("") ? key : (key + "`");
 
             bufferedOutputStream.write(data.getBytes(StandardCharsets.UTF_8));
-            bufferedOutputStream.flush();
             bufferedOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    //-------------------------------------- EDIT ---------------------------------------------\\
 
     public static void addNewSlang(String pathFile, String slang, String definition){
         try {
