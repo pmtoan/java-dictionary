@@ -1,10 +1,13 @@
 package vn.edu.hcmus.fit.pmtoan.Dict_19127586;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -31,18 +34,16 @@ public class UI implements ActionListener {
     private JFrame mainFrame;
 
     JPanel searchPanel;
-    private JButton searchPanelButton;
     private JButton slangSearchButton;
     private JButton definitionSearchButton;
     private JTextField searchInput;
     private JTextArea definition;
-    private DefaultListModel slangListModel;
+    private final DefaultListModel slangListModel;
     private JList slangResult;
-    private DefaultListModel historyListModel;
+    private final DefaultListModel historyListModel;
     private JList searchHistory;
 
     JPanel editPanel;
-    private JButton editPanelButton;
     private JTextField slangInput;
     private JTextArea definitionInput;
     private JButton addButton;
@@ -50,14 +51,13 @@ public class UI implements ActionListener {
     private JButton deleteButton;
     private JButton resetButton;
     private JButton deleteHistoryButton;
-    private DefaultTableModel editTableModel;
-    private JTable slangTable;
+    private final DefaultTableModel editTableModel;
+    private final JTable slangTable;
     private String oldSlang = "";
     private String oldDefinition = "";
     private int selectedRow = -1;
 
     JPanel miniGamePanel;
-    private JButton miniGamePanelButton;
     private JPanel slangOfTheDayPanel;
     private JPanel miniGame1Panel;
     private JPanel miniGame2Panel;
@@ -84,6 +84,13 @@ public class UI implements ActionListener {
         historyListModel = new DefaultListModel();
         historyListModel.addAll(readHistoryFile(historyFile));
 
+        String[] colName = {"Slang", "Definition"};
+        String[][] data = {};
+        editTableModel = new DefaultTableModel(data, colName);
+
+        slangTable = new JTable(editTableModel);
+        fillDataToTable(slangOriginFile, slangCloneFile);
+
         prepareGUI();
     }
 
@@ -108,7 +115,6 @@ public class UI implements ActionListener {
     }
 
     public void showUI(){
-        JPanel functionPanel = functionPanel();
         JPanel workPanel = new JPanel();
 
         searchPanel = searchPanel();
@@ -119,49 +125,41 @@ public class UI implements ActionListener {
         workPanel.add(editPanel);
         workPanel.add(miniGamePanel);
 
-        searchPanel.setVisible(true);
-        editPanel.setVisible(false);
-        miniGamePanel.setVisible(false);
-
-        mainFrame.add(functionPanel, BorderLayout.WEST);
+        mainFrame.add(tabbedPane(), BorderLayout.NORTH);
         mainFrame.add(workPanel, BorderLayout.CENTER);
 
         mainFrame.pack();
         mainFrame.setVisible(true);
     }
 
-    private JPanel functionPanel(){
-        JPanel panel = new JPanel(new GridBagLayout());
+    private JTabbedPane tabbedPane() {
+        JTabbedPane tabbedPane = new JTabbedPane();
 
-        searchPanelButton = new JButton("SEARCH");
-        searchPanelButton.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
-        searchPanelButton.setPreferredSize(new Dimension(200,50));
-        searchPanelButton.setFocusable(false);
-        searchPanelButton.addActionListener(this);
+        /* add three tab with three JPanel */
+        tabbedPane.addTab("SEARCH", null, searchPanel, "click to show search tab");
+        tabbedPane.addTab("EDIT", null, editPanel, "click to show edit tab");
+        tabbedPane.addTab("MINI-GAME", null, miniGamePanel, "click to show mini-game tab");
 
-        editPanelButton = new JButton("EDIT");
-        editPanelButton.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
-        editPanelButton.setPreferredSize(new Dimension(200,50));
-        editPanelButton.setFocusable(false);
-        editPanelButton.addActionListener(this);
+        tabbedPane.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 20));
+        tabbedPane.setFocusable(false);
 
-        miniGamePanelButton = new JButton("MINIGAME");
-        miniGamePanelButton.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
-        miniGamePanelButton.setPreferredSize(new Dimension(200,50));
-        miniGamePanelButton.setFocusable(false);
-        miniGamePanelButton.addActionListener(this);
+        tabbedPane.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                searchInput.setText("");
+                slangInput.setText("");
+                definitionInput.setText("");
+                definition.setText("");
+                if (e.getSource() instanceof JTabbedPane) {
+                    JTabbedPane pane = (JTabbedPane) e.getSource();
+                    if(pane.getSelectedIndex() == 0){
+                        slangListModel.addAll(dictionary.keySet());
+                    };
+                }
+            }
+        });
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(30,30,30,30);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(searchPanelButton, gbc);
-        gbc.gridy = 1;
-        panel.add(editPanelButton, gbc);
-        gbc.gridy = 2;
-        panel.add(miniGamePanelButton, gbc);
-
-        return panel;
+        return tabbedPane;
     }
 
     private JPanel searchPanel(){
@@ -171,7 +169,7 @@ public class UI implements ActionListener {
         panel_label.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 40));
 
         //-------------------------- SEARCH FIELD -----------------------------\\
-        searchInput = new JTextField(30);
+        searchInput = new JTextField(40);
         searchInput.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
         searchInput.addKeyListener(new KeyListener() {
             @Override
@@ -180,6 +178,7 @@ public class UI implements ActionListener {
                 text.insert(searchInput.getCaretPosition(), e.getKeyChar());
                 if(e.getKeyChar() == (char)8){
                     text.deleteCharAt(searchInput.getCaretPosition());
+                    definition.setText("");
                 }
 
                 HashSet<String> keySet = new HashSet<>(dictionary.keySet());
@@ -248,7 +247,7 @@ public class UI implements ActionListener {
             }
         });
         JScrollPane scrollPane = new JScrollPane(slangResult);
-        scrollPane.setPreferredSize(new Dimension(450,250));
+        scrollPane.setPreferredSize(new Dimension(650,400));
 
         JPanel slang_panel = new JPanel(new BorderLayout(10,10));
         slang_panel.add(label_slang, BorderLayout.NORTH);
@@ -265,7 +264,7 @@ public class UI implements ActionListener {
         definition.setEditable(false);
 
         JScrollPane scrollPane2 = new JScrollPane(definition);
-        scrollPane2.setPreferredSize(new Dimension(450,200));
+        scrollPane2.setPreferredSize(new Dimension(650,250));
 
         JPanel definition_panel = new JPanel(new BorderLayout(10,10));
         definition_panel.add(label_definition, BorderLayout.NORTH);
@@ -280,7 +279,7 @@ public class UI implements ActionListener {
         searchHistory.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
 
         JScrollPane scrollPane3 = new JScrollPane(searchHistory);
-        scrollPane3.setPreferredSize(new Dimension(180,580));
+        scrollPane3.setPreferredSize(new Dimension(250,780));
 
         deleteHistoryButton = new JButton("delete history");
         deleteHistoryButton.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 20));
@@ -300,8 +299,10 @@ public class UI implements ActionListener {
         gbc.insets = new Insets(10,15,10,15);
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 2;
         panel.add(panel_label, gbc);
         gbc.gridy = 1;
+        gbc.gridwidth = 1;
         panel.add(searchInput, gbc);
         gbc.gridy = 2;
         panel.add(search_panel, gbc);
@@ -320,8 +321,8 @@ public class UI implements ActionListener {
     }
 
     private JPanel editPanel(){
-        int col = 35;
-        int size_text = 20;
+        int col = 40;
+        int size_text = 25;
         String font = Font.MONOSPACED;
 
         JLabel panelLabel = new JLabel("EDIT");
@@ -341,7 +342,13 @@ public class UI implements ActionListener {
                     text.deleteCharAt(slangInput.getCaretPosition());
                 }
 
-                fillDataToTable(slangOriginFile, slangCloneFile, text.toString());
+                TableRowSorter sorter = new TableRowSorter(editTableModel);
+                slangTable.setRowSorter(sorter);
+                if(text.length() == 0){
+                    sorter.setRowFilter(null);
+                } else{
+                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
+                }
             }
 
             @Override
@@ -363,7 +370,7 @@ public class UI implements ActionListener {
         definitionInput.setLineWrap(true);
         definitionInput.setWrapStyleWord(true);
         JScrollPane scrollDefinition = new JScrollPane(definitionInput);
-        scrollDefinition.setPreferredSize(new Dimension(0, 150));
+        scrollDefinition.setPreferredSize(new Dimension(0, 200));
 
         //------------------------- Input setup -------------------------\\
         JPanel input = new JPanel();
@@ -422,15 +429,10 @@ public class UI implements ActionListener {
         btn.add(resetButton);
 
         //------------------------- Table of slang -------------------------\\
-        String[] colName = {"Slang", "Definition"};
-        String[][] data = {};
-        editTableModel = new DefaultTableModel(data, colName);
-
-        slangTable = new JTable(editTableModel);
-        slangTable.setFont(new Font(font, Font.PLAIN, 17));
+        slangTable.setFont(new Font(font, Font.PLAIN, 20));
         slangTable.getTableHeader().setFont(new Font(font, Font.PLAIN, size_text));
         slangTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        slangTable.getColumnModel().getColumn(1).setPreferredWidth(250);
+        slangTable.getColumnModel().getColumn(1).setPreferredWidth(400);
         DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer();
         cellRenderer.setHorizontalAlignment(JLabel.CENTER);
         slangTable.getColumnModel().getColumn(0).setCellRenderer(cellRenderer);
@@ -442,7 +444,7 @@ public class UI implements ActionListener {
         });
 
         JScrollPane scroll_list = new JScrollPane(slangTable);
-        scroll_list.setPreferredSize(new Dimension(550,300));
+        scroll_list.setPreferredSize(new Dimension(750,500));
 
         //------------------------- Edit panel setup -------------------------\\
         JPanel result = new JPanel();
@@ -462,34 +464,70 @@ public class UI implements ActionListener {
         return result;
     }
 
-    private void fillDataToTable(String originFile, String cloneFile, String searchText){
+    private void fillDataToTable(String originFile, String cloneFile){
         List<Dictionary> listSlang = readCloneFileToTable(originFile, cloneFile);
-
-        if(!searchText.equals("")){
-            List<Dictionary> listSearch = new ArrayList<>();
-
-            for(Dictionary dic : listSlang){
-                if(dic.getSlang().toLowerCase().contains(searchText.toLowerCase())){
-                    listSearch.add(dic);
-                }
-            }
-            listSlang = listSearch;
-        }
 
         editTableModel.setRowCount(0);
         for (Dictionary slang : listSlang) {
             editTableModel.addRow(new Object[]{slang.getSlang(), slang.getDefinition()});
         }
+        TableRowSorter sorter = new TableRowSorter(editTableModel);
+        slangTable.setRowSorter(sorter);
+        sorter.setRowFilter(null);
+    }
+
+    private void updateTable(String slang, String definition, String action){
+        TableRowSorter sorter = new TableRowSorter(editTableModel);
+        slangTable.setRowSorter(sorter);
+        sorter.setRowFilter(null);
+
+        if(action.equals("add")){
+            editTableModel.addRow(new Object[]{slang, definition});
+        }else if(action.equals("update")){
+            editTableModel.setValueAt(slang, selectedRow, 0);
+            editTableModel.setValueAt(definition, selectedRow, 1);
+        }else if(action.equals("delete")){
+            editTableModel.removeRow(selectedRow);
+        }else if(action.equals("overwrite")){
+            for(int i=0; i<editTableModel.getRowCount(); i++){
+                if(editTableModel.getValueAt(i, 0).equals(slang)){
+                    editTableModel.removeRow(i);
+                    i--;
+                }
+            }
+            editTableModel.addRow(new Object[]{slang, definition});
+        }
+    }
+
+    private void updateMap(String slang, String definition, String newDefinition, String action){
+        if(action.equals("add")){
+            MapUtils.addNewSlangToDictionary(slang, definition, dictionary, defMap);
+            slangStore.addWord(slang);
+        }
+        else if(action.equals("duplicate")){
+            MapUtils.addDuplicateSlangToDictionary(slang, definition, dictionary, defMap);
+        }
+        else if(action.equals("update")){
+            MapUtils.removeDefinitionOutOfMap(slang, definition, dictionary, defMap);
+            MapUtils.addNewDefinition(slang, newDefinition, dictionary, defMap);
+        }
+        else if(action.equals("delete")){
+            MapUtils.deleteOneSlang(slang, definition, dictionary, defMap);
+            if(!dictionary.containsKey(slang)){
+                slangStore.delete(slang);
+            }
+        }
+        else if(action.equals("overwrite")){
+           MapUtils.deleteDuplicateSlang(slang, dictionary, defMap);
+            updateMap(slang, definition, "","add");
+        }
     }
 
     private void actionWhenInteractTable() {
-        selectedRow = slangTable.getSelectedRow();
+        selectedRow = slangTable.convertRowIndexToModel(slangTable.getSelectedRow());
 
-        String slang = (String) editTableModel.getValueAt(selectedRow, 0);
-        String definition = (String) editTableModel.getValueAt(selectedRow, 1);
-
-        slangInput.setText(slang);
-        definitionInput.setText(definition);
+        slangInput.setText((String) editTableModel.getValueAt(selectedRow, 0));
+        definitionInput.setText((String) editTableModel.getValueAt(selectedRow, 1));
 
         oldSlang = (String) editTableModel.getValueAt(selectedRow, 0);
         oldDefinition = (String) editTableModel.getValueAt(selectedRow, 1);
@@ -534,6 +572,10 @@ public class UI implements ActionListener {
         workPanel.add(miniGame1Panel);
         workPanel.add(miniGame2Panel);
 
+        slangOfTheDayPanel.setVisible(false);
+        miniGame1Panel.setVisible(false);
+        miniGame2Panel.setVisible(false);
+
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx=0;
@@ -549,12 +591,12 @@ public class UI implements ActionListener {
     }
 
     private JPanel slangOfTheDay(){
-        int size_text = 20;
+        int size_text = 30;
         String font = Font.MONOSPACED;
 
         //---------------------- Initial -----------------------------\\
         JLabel panel_label = new JLabel("Slang of the day");
-        panel_label.setFont(new Font(font, Font.PLAIN, 30));
+        panel_label.setFont(new Font(font, Font.PLAIN, 35));
 
         JLabel slang_label = new JLabel("Slang Word: ");
         slang_label.setFont(new Font(font, Font.PLAIN, size_text));
@@ -569,7 +611,7 @@ public class UI implements ActionListener {
         definition_text.setFont(new Font(font, Font.PLAIN, size_text));
         definition_text.setLineWrap(true);
         definition_text.setWrapStyleWord(true);
-        definition_text.setPreferredSize(new Dimension(350, 150));
+        definition_text.setPreferredSize(new Dimension(550, 250));
 
 
         //---------------------- Random a slang -----------------------------\\
@@ -587,7 +629,7 @@ public class UI implements ActionListener {
 
         //---------------------- Refresh button to random a slang -----------------------------\\
         JButton refresh_btn = new JButton("Refresh");
-        refresh_btn.setFont(new Font(font, Font.BOLD, size_text));
+        refresh_btn.setFont(new Font(font, Font.BOLD, 20));
         refresh_btn.setPreferredSize(new Dimension(150,35));
         refresh_btn.setFocusable(false);
         refresh_btn.addActionListener(new ActionListener() {
@@ -639,7 +681,7 @@ public class UI implements ActionListener {
     }
 
     private JPanel miniGame1Panel(){
-        int size_text = 20;
+        int size_text = 25;
         String font = Font.MONOSPACED;
 
         //--------------------------- Initial ----------------------------------\\
@@ -697,7 +739,7 @@ public class UI implements ActionListener {
 
         //-------------------------- Submit answer and check -----------------------------\\
         JButton submit = new JButton("SUBMIT");
-        submit.setFont(new Font(font, Font.PLAIN, size_text));
+        submit.setFont(new Font(font, Font.PLAIN, size_text - 5));
         submit.setFocusable(false);
         submit.addActionListener(new ActionListener() {
             @Override
@@ -735,6 +777,29 @@ public class UI implements ActionListener {
                         JOptionPane.showMessageDialog(miniGamePanel, "Wrong Answer!\n" + str,
                                 "T_T", JOptionPane.INFORMATION_MESSAGE);
                     }
+
+                    slangList.clear();
+                    int i = 0;
+                    while(i < group.getButtonCount()){
+                        int randomNumber = new Random().nextInt(slangListModel.size());
+                        String slang = slangListModel.getElementAt(randomNumber).toString();
+                        if(!slangList.contains(slang)){
+                            slangList.add(slang);
+                            i++;
+                        } else{
+                            i--;
+                        }
+                    }
+
+                    for(int j=0; j<listCheck.size(); j++){
+                        List<String> def = dictionary.get(slangList.get(j));
+                        String value = def.get(new Random().nextInt(def.size()));
+                        listCheck.get(j).setText(value);
+                    }
+
+                    answerOfMiniGame1 = new Random().nextInt(slangList.size());
+                    question_label.setText(slangList.get(answerOfMiniGame1));
+                    group.clearSelection();
                 }
                 else{
                     JOptionPane.showMessageDialog(miniGamePanel, "Please choose an answer !",
@@ -743,42 +808,9 @@ public class UI implements ActionListener {
             }
         });
 
-        //-------------------------- Next question button -----------------------------\\
-        JButton nextQuestion = new JButton("Next Question");
-        nextQuestion.setFont(new Font(font, Font.PLAIN, size_text));
-        nextQuestion.setFocusable(false);
-        nextQuestion.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                slangList.clear();
-                int i = 0;
-                while(i < group.getButtonCount()){
-                    int randomNumber = new Random().nextInt(slangListModel.size());
-                    String slang = slangListModel.getElementAt(randomNumber).toString();
-                    if(!slangList.contains(slang)){
-                        slangList.add(slang);
-                        i++;
-                    } else{
-                        i--;
-                    }
-                }
-
-                for(int j=0; j<listCheck.size(); j++){
-                    List<String> def = dictionary.get(slangList.get(j));
-                    String value = def.get(new Random().nextInt(def.size()));
-                    listCheck.get(j).setText(value);
-                }
-
-                answerOfMiniGame1 = new Random().nextInt(slangList.size());
-                question_label.setText(slangList.get(answerOfMiniGame1));
-                group.clearSelection();
-            }
-        });
-
         //------------------------------ Layout setup ---------------------------------\\
         JPanel button = new JPanel(new FlowLayout(FlowLayout.CENTER, 30,0));
         button.add(submit);
-        button.add(nextQuestion);
 
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -812,7 +844,7 @@ public class UI implements ActionListener {
     }
 
     private JPanel miniGame2Panel(){
-        int size_text = 20;
+        int size_text = 25;
         String font = Font.MONOSPACED;
 
         //--------------------------- Initial ----------------------------------\\
@@ -870,7 +902,7 @@ public class UI implements ActionListener {
 
         //-------------------------- Submit answer and check -----------------------------\\
         JButton submit = new JButton("SUBMIT");
-        submit.setFont(new Font(font, Font.PLAIN, size_text));
+        submit.setFont(new Font(font, Font.PLAIN, size_text - 5));
         submit.setFocusable(false);
         submit.addActionListener(new ActionListener() {
             @Override
@@ -908,6 +940,28 @@ public class UI implements ActionListener {
                         JOptionPane.showMessageDialog(miniGamePanel, "Wrong Answer!\n" + str,
                                 "T_T", JOptionPane.INFORMATION_MESSAGE);
                     }
+                    slangList.clear();
+                    int i = 0;
+                    while(i < group.getButtonCount()){
+                        int randomNumber = new Random().nextInt(slangListModel.size());
+                        String slang = slangListModel.getElementAt(randomNumber).toString();
+                        if(!slangList.contains(slang)){
+                            slangList.add(slang);
+                            i++;
+                        } else{
+                            i--;
+                        }
+                    }
+
+                    for(int j=0; j<listAnswer.size(); j++){
+                        listAnswer.get(j).setText(slangList.get(j));
+                    }
+
+                    answerOfMiniGame2 = new Random().nextInt(slangList.size());
+                    List<String> def = dictionary.get(slangList.get(answerOfMiniGame2));
+                    String value = def.get(new Random().nextInt(def.size()));
+                    question_label.setText(value);
+                    group.clearSelection();
                 }
                 else{
                     JOptionPane.showMessageDialog(miniGamePanel, "Please choose an answer !",
@@ -916,44 +970,10 @@ public class UI implements ActionListener {
             }
         });
 
-        //-------------------------- Next question button -----------------------------\\
-        JButton nextQuestion = new JButton("Next Question");
-        nextQuestion.setFont(new Font(font, Font.PLAIN, size_text));
-        nextQuestion.setFocusable(false);
-        nextQuestion.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                slangList.clear();
-                int i = 0;
-                while(i < group.getButtonCount()){
-                    int randomNumber = new Random().nextInt(slangListModel.size());
-                    String slang = slangListModel.getElementAt(randomNumber).toString();
-                    if(!slangList.contains(slang)){
-                        slangList.add(slang);
-                        i++;
-                    } else{
-                        i--;
-                    }
-                }
-
-                for(int j=0; j<listAnswer.size(); j++){
-                    listAnswer.get(j).setText(slangList.get(j));
-                    listAnswer.get(j).setFont(new Font(font, Font.PLAIN, size_text));
-                    listAnswer.get(j).setFocusable(false);
-                }
-
-                answerOfMiniGame2 = new Random().nextInt(slangList.size());
-                List<String> def = dictionary.get(slangList.get(answerOfMiniGame2));
-                String value = def.get(new Random().nextInt(def.size()));
-                question_label.setText(value);
-                group.clearSelection();
-            }
-        });
 
         //------------------------------ Layout setup ---------------------------------\\
         JPanel button = new JPanel(new FlowLayout(FlowLayout.CENTER, 30,0));
         button.add(submit);
-        button.add(nextQuestion);
 
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -990,20 +1010,7 @@ public class UI implements ActionListener {
     public void actionPerformed(ActionEvent e)  {
         Object source = e.getSource();
 
-        if (source.equals(searchPanelButton)) {
-            searchPanel.setVisible(true);
-            editPanel.setVisible(false);
-            miniGamePanel.setVisible(false);
-
-            searchInput.setText("");
-            definition.setText("");
-
-            dictionary = new HashMap<>();
-            defMap = new HashMap<>();
-            readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
-            slangListModel.addAll(dictionary.keySet());
-        }
-        else if(source.equals(slangSearchButton)){
+        if(source.equals(slangSearchButton)){
             HashSet<String> keySet = new HashSet<>(dictionary.keySet());
             List<String> listResult = searchBySlang(searchInput.getText(), slangStore);
             definition.setText("");
@@ -1021,15 +1028,6 @@ public class UI implements ActionListener {
         else if(source.equals(deleteHistoryButton)){
             historyListModel.clear();
             saveHistorySearch(historyFile, "", false);
-        }
-        else if(source.equals(editPanelButton)) {
-            searchPanel.setVisible(false);
-            editPanel.setVisible(true);
-            miniGamePanel.setVisible(false);
-
-            slangInput.setText("");
-            definitionInput.setText("");
-            fillDataToTable(slangOriginFile, slangCloneFile, "");
         }
         else if(source.equals(addButton)){
             String slang = slangInput.getText();
@@ -1063,6 +1061,9 @@ public class UI implements ActionListener {
 
                     if (choose == JOptionPane.YES_OPTION) {
                         overwriteAllSlang(slangCloneFile, slang, definition);
+                        updateTable(slang, definition, "overwrite");
+                        updateMap(slang, definition, "", "overwrite");
+
                         done = true;
                     } else {
                         choose = JOptionPane.showConfirmDialog(editPanel,
@@ -1071,6 +1072,9 @@ public class UI implements ActionListener {
 
                         if (choose == JOptionPane.YES_OPTION) {
                             addNewSlang(slangCloneFile, slang, definition);
+                            updateTable(slang, definition, "add");
+                            updateMap(slang, definition, "","duplicate");
+
                             done = true;
                         }
                     }
@@ -1078,6 +1082,9 @@ public class UI implements ActionListener {
             }
             else {
                 addNewSlang(slangCloneFile, slang, definition);
+                updateTable(slang, definition, "add");
+                updateMap(slang, definition, "", "add");
+
                 done = true;
             }
 
@@ -1086,11 +1093,6 @@ public class UI implements ActionListener {
                 definitionInput.setText("");
                 JOptionPane.showMessageDialog(editPanel,
                         "Add slang word success !", "Notification", JOptionPane.INFORMATION_MESSAGE);
-
-                fillDataToTable(slangOriginFile, slangCloneFile, "");
-                dictionary = new HashMap<>();
-                defMap = new HashMap<>();
-                readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
             }
         }
         else if(source.equals(updateButton)){
@@ -1105,33 +1107,16 @@ public class UI implements ActionListener {
                                     "update function is just modify definition!", "Notification",
                             JOptionPane.INFORMATION_MESSAGE);
                 } else {
-                    boolean validDefinition = true;
+                    updateSlang(slangCloneFile, oldSlang, oldDefinition, newDefinition);
+                    updateTable(oldSlang, newDefinition, "update");
+                    updateMap(oldSlang, oldDefinition, newDefinition,"update");
 
-                    for(String value : dictionary.get(newSlang)){
-                        List<String> split = List.of(newDefinition.split("\\|"));
-                        if (split.contains(value)) {
-                            validDefinition = false;
-                            break;
-                        }
-                    }
-                    if(!validDefinition) {
-                        JOptionPane.showMessageDialog(editPanel,
-                                "Slang and definition is exist! Invalid UPDATE action !", "Warning",
-                                JOptionPane.WARNING_MESSAGE);
-                    }
-                    else{
-                        updateSlang(slangCloneFile, oldSlang, oldDefinition, newDefinition);
+                    JOptionPane.showMessageDialog(editPanel,
+                            "Update success !", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
-                        JOptionPane.showMessageDialog(editPanel,
-                                "Update success !", "Notification", JOptionPane.INFORMATION_MESSAGE);
+                    slangInput.setText("");
+                    definitionInput.setText("");
 
-                        slangInput.setText("");
-                        definitionInput.setText("");
-                        fillDataToTable(slangOriginFile, slangCloneFile, "");
-                        dictionary = new HashMap<>();
-                        defMap = new HashMap<>();
-                        readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
-                    }
                 }
             } else {
                 JOptionPane.showMessageDialog(editPanel,
@@ -1151,17 +1136,14 @@ public class UI implements ActionListener {
 
                 if(choose == JOptionPane.YES_OPTION){
                     deleteSlang(slangCloneFile, slang, definition);
+                    updateTable(oldSlang, definition, "delete");
+                    updateMap(slang, definition, "","delete");
 
                     JOptionPane.showMessageDialog(editPanel,
                             "Delete done !", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
                     slangInput.setText("");
                     definitionInput.setText("");
-
-                    fillDataToTable(slangOriginFile, slangCloneFile, "");
-                    dictionary = new HashMap<>();
-                    defMap = new HashMap<>();
-                    readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
                 }
             } else {
                 JOptionPane.showMessageDialog(editPanel,
@@ -1176,6 +1158,10 @@ public class UI implements ActionListener {
 
             if (choose == JOptionPane.YES_OPTION) {
                 deleteCloneFile(slangCloneFile);
+                fillDataToTable(slangOriginFile, slangCloneFile);
+                dictionary = new HashMap<>();
+                defMap = new HashMap<>();
+                readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
 
                 JOptionPane.showMessageDialog(editPanel,
                         "Reset done !", "Notification",
@@ -1183,26 +1169,7 @@ public class UI implements ActionListener {
 
                 slangInput.setText("");
                 definitionInput.setText("");
-
-                fillDataToTable(slangOriginFile, slangCloneFile, "");
-                dictionary = new HashMap<>();
-                defMap = new HashMap<>();
-                readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
             }
-        }
-        else if(source.equals(miniGamePanelButton)) {
-            searchPanel.setVisible(false);
-            editPanel.setVisible(false);
-            miniGamePanel.setVisible(true);
-
-            slangOfTheDayPanel.setVisible(false);
-            miniGame1Panel.setVisible(false);
-            miniGame2Panel.setVisible(false);
-
-            dictionary = new HashMap<>();
-            defMap = new HashMap<>();
-            readCloneFile(slangOriginFile, slangCloneFile, dictionary, defMap);
-            slangListModel.addAll(dictionary.keySet());
         }
         else if(source.equals(slangOfTheDayButton)){
             slangOfTheDayPanel.setVisible(true);

@@ -48,9 +48,8 @@ public class Utils {
                             }
                         } else{
                             slangList.add(split[0]);
-                            definitionMap.put(def.toLowerCase(), slangList);
+                            definitionMap.put(definition, slangList);
                         }
-
                     }
                 }
             }
@@ -139,7 +138,7 @@ public class Utils {
         List<String> list = new ArrayList<>();
 
         String[] parse = pattern.trim().split(" ", 2);
-        String firstElement = parse[0];
+        String firstElement = parse[0].toLowerCase();
 
         if(defMap.containsKey(firstElement)){
             list.addAll(defMap.get(firstElement));
@@ -147,8 +146,8 @@ public class Utils {
 
         if(parse.length > 1){
             String[] elements = parse[1].split(" ");
-            System.out.println(Arrays.toString(elements));
             for(String element : elements){
+                element = element.toLowerCase();
                 if(!element.equals(" ") && !element.equals("")){
                     if(defMap.containsKey(element.trim())){
                         list.retainAll(defMap.get(element.trim()));
