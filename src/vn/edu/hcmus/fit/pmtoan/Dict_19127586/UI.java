@@ -31,6 +31,9 @@ public class UI implements ActionListener {
     Map<String, List<String>> defMap;
     Trie slangStore;
 
+    // java : java swing | java networking | java collection
+    // ui : swing
+    // java swing
     private JFrame mainFrame;
 
     JPanel searchPanel;
@@ -152,7 +155,7 @@ public class UI implements ActionListener {
                 definition.setText("");
                 if (e.getSource() instanceof JTabbedPane) {
                     JTabbedPane pane = (JTabbedPane) e.getSource();
-                    if(pane.getSelectedIndex() == 0){
+                    if(pane.getSelectedIndex() == 0 || pane.getSelectedIndex() == 2){
                         slangListModel.addAll(dictionary.keySet());
                     };
                 }

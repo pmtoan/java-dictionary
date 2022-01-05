@@ -27,6 +27,12 @@ public class Trie{
         }
     }
 
+    //ABC   -> root -> A -> B -> C
+    //ABCD                          -> D
+    //ABCDE                         -> D -> E
+    //ABCDEF                        -> D -> E -> F
+
+
     private final Node root;
 
     public Trie(){
