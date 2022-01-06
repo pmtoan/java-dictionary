@@ -31,9 +31,13 @@ public class UI implements ActionListener {
     Map<String, List<String>> defMap;
     Trie slangStore;
 
-    // java : java swing | java networking | java collection
-    // ui : swing
-    // java swing
+    // HBTY : happy birthday to you | happy birthday to u
+    // HNY : happy new year
+    // HD: happy day
+    // O(1)
+    // search: happy new
+
+
     private JFrame mainFrame;
 
     JPanel searchPanel;
@@ -267,7 +271,7 @@ public class UI implements ActionListener {
         definition.setEditable(false);
 
         JScrollPane scrollPane2 = new JScrollPane(definition);
-        scrollPane2.setPreferredSize(new Dimension(650,250));
+        scrollPane2.setPreferredSize(new Dimension(650,200));
 
         JPanel definition_panel = new JPanel(new BorderLayout(10,10));
         definition_panel.add(label_definition, BorderLayout.NORTH);
@@ -282,7 +286,7 @@ public class UI implements ActionListener {
         searchHistory.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
 
         JScrollPane scrollPane3 = new JScrollPane(searchHistory);
-        scrollPane3.setPreferredSize(new Dimension(250,780));
+        scrollPane3.setPreferredSize(new Dimension(250,730));
 
         deleteHistoryButton = new JButton("delete history");
         deleteHistoryButton.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 20));
@@ -373,7 +377,7 @@ public class UI implements ActionListener {
         definitionInput.setLineWrap(true);
         definitionInput.setWrapStyleWord(true);
         JScrollPane scrollDefinition = new JScrollPane(definitionInput);
-        scrollDefinition.setPreferredSize(new Dimension(0, 200));
+        scrollDefinition.setPreferredSize(new Dimension(0, 150));
 
         //------------------------- Input setup -------------------------\\
         JPanel input = new JPanel();
@@ -447,7 +451,7 @@ public class UI implements ActionListener {
         });
 
         JScrollPane scroll_list = new JScrollPane(slangTable);
-        scroll_list.setPreferredSize(new Dimension(750,500));
+        scroll_list.setPreferredSize(new Dimension(750,450));
 
         //------------------------- Edit panel setup -------------------------\\
         JPanel result = new JPanel();

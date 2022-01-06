@@ -27,11 +27,11 @@ public class Trie{
         }
     }
 
-    //ABC   -> root -> A -> B -> C
-    //ABCD                          -> D
-    //ABCDE                         -> D -> E
-    //ABCDEF                        -> D -> E -> F
-
+    //ABC     -> root -> A -> B -> C
+    //ABCD    -> root -> A -> B -> C -> D
+    //ABCDE   -> root -> A -> B -> C -> D -> E
+    //ABCDKF  -> root -> A -> B -> C -> D -> K -> F
+    //XYZ     -> root -> X -> Y -> Z
 
     private final Node root;
 
